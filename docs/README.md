@@ -20,6 +20,7 @@ Business, compliance, product, and implementation documents for Starman CRM.
 | `Starman-Master-Prompt.md` | Master build, verification, and AI system prompt reference. |
 | `Starman-Canada-Data-Residency-Guide.md` | Canadian data residency guidance and production posture. |
 | `Starman-CanadaLife-Quadrus-Integration.md` | How Canada Life / Quadrus data access would work: API reality, ranked options, Quadrus notes, compliance guardrails, and questions to confirm with the providers. |
+| `Starman-SRED-and-Funding.md` | How Starman's R&D (incl. AI-assisted "vibe coding") could qualify for CRA SR&ED tax credits and other funding: eligibility test, documentation requirements, candidate areas, options, and a capture workflow. Not tax advice. |
 | `Starman-Go-Live-Plan-30-Days.md` | 30-day launch plan. |
 | `Starman-Household-Suggestions-Design.md` | Household suggestion design and review workflow. |
 | `Starman-Cloud-Provider-Decision.md` | Decision record selecting Azure Container Apps and superseding active AWS assumptions. |
