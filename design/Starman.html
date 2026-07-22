@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Starman — Advisor OS · Aspire CRM</title>
-<meta name="project" content="Starman"><meta name="version" content="2.4.0">
+<meta name="project" content="Starman"><meta name="version" content="2.5.0">
 <!-- ════════════════════════════════════════════════════════════════════
      STARMAN · "ADVISOR OS"  —  Aspire Investments & Insurance advisor platform
      Version: see <meta name="version"> above + docs/Starman-Version-History.md
@@ -402,6 +402,20 @@ label.lb{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:up
 .toast .tic{color:var(--emerald)}
 @keyframes tin{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
 
+/* portals launcher */
+.portalwrap{position:relative;display:inline-flex}
+.portalmenu{position:absolute;top:calc(100% + 8px);right:0;min-width:248px;background:var(--bg1);border:1px solid var(--line2);
+  border-radius:var(--r-s);box-shadow:0 14px 44px rgba(0,0,0,.42);padding:7px;z-index:60;display:none}
+.portalmenu.open{display:block;animation:navin .16s var(--ease) both}
+.portalmenu .pmh{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:5px 9px 7px}
+.portalmenu a{display:flex;align-items:center;gap:10px;padding:9px;border-radius:8px;text-decoration:none;color:var(--ink);transition:background .12s}
+.portalmenu a:hover{background:var(--panel2)}
+.portalmenu a .pi{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;
+  background:var(--emerald-glow);color:var(--emerald);font-size:13px;flex:0 0 auto}
+.portalmenu a b{font-size:12.5px;font-weight:640;display:block;line-height:1.25}
+.portalmenu a small{font-size:10.5px;color:var(--muted)}
+.portalmenu a .pex{margin-left:auto;font-size:11px;color:var(--faint)}
+.portalmenu .pmf{font-size:10px;color:var(--faint);padding:8px 9px 4px;border-top:1px solid var(--line);margin-top:5px;line-height:1.4}
 /* notifications / activity */
 .notif{display:flex;gap:11px;padding:11px 12px;border:1px solid var(--line);border-radius:var(--r-s);margin-bottom:8px;cursor:pointer;transition:background .12s,border-color .12s}
 .notif:hover{background:var(--panel2);border-color:var(--line2)}
@@ -569,7 +583,7 @@ label.lb{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:up
       <button class="btn pri" type="submit" style="width:100%;height:40px;justify-content:center;font-size:13.5px">Enter Starman →</button>
     </form>
     <div style="text-align:center;margin-top:14px"><button class="btn ghost" type="button" onclick="toggleTheme()" style="font-size:11px">◐ Light / dark</button></div>
-    <div class="lfoot">v2.4 · 2026-07-22 · Aspire Investments &amp; Insurance</div>
+    <div class="lfoot">v2.5 · 2026-07-22 · Aspire Investments &amp; Insurance</div>
   </div>
 </div>
 
@@ -593,6 +607,10 @@ label.lb{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:up
       <div class="crumbs" id="crumbs"><b>Command</b></div>
       <div class="topbtns">
         <div class="srch" onclick="openPalette()"><span style="opacity:.6">⌕</span><input id="topsrch" placeholder="Search or command…" readonly style="cursor:pointer"><kbd>⌘K</kbd></div>
+        <div class="portalwrap">
+          <button class="ibtn" onclick="togglePortals(event)" id="portalbtn" title="Open a carrier or dealer advisor portal" aria-haspopup="true" aria-expanded="false">⧉ Portals</button>
+          <div class="portalmenu" id="portalmenu" role="menu" aria-label="Advisor portals"></div>
+        </div>
         <button class="ibtn" onclick="toggleTheme()" id="themebtn" title="Toggle theme">◐</button>
         <button class="ibtn" onclick="openDrawer('ai')" title="Starman Intelligence"><span class="aispark">✦</span> Ask</button>
         <button class="ibtn" onclick="openDrawer('notif')" title="Notifications">🔔<span class="dot" id="ndot" style="display:none">0</span></button>
@@ -722,6 +740,14 @@ const advColor=k=>(ADVISORS[k]||{}).color||'#8a94ab';
 const initials=n=>n.split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
 /* current signed-in user + demo auth */
 const DEMO_PW='starman123';
+/* Carrier/dealer advisor sign-in portals. These are plain external links opened in
+   a new tab (no integration, no data, no credentials — see
+   docs/Starman-CanadaLife-Quadrus-Integration.md, Option F). Confirm exact URLs
+   with Canada Life / the Quadrus dealer before relying on them. */
+const PORTALS=[
+  {name:'Canada Life advisor sign-in',url:'https://www.canadalife.com/sign-in.html',note:'Advisor portal'},
+  {name:'Quadrus RepNet sign-in',url:'https://www.quadrusadvisor.com/',note:'Dealer / RepNet'}
+];
 let ME=load('me','JD');
 function acctByEmail(e){e=(e||'').trim().toLowerCase();return Object.keys(ADVISORS).find(k=>(ADVISORS[k].email||'').toLowerCase()===e)||null;}
 const me=()=>ADVISORS[ME]||ADVISORS.AL;
@@ -855,6 +881,19 @@ function saveTickets(){save('tickets',tickets);}
 function logAudit(act,obj){audit.unshift({act,obj:obj||'',by:(typeof ME!=='undefined'?ME:'AL'),at:new Date().toISOString()});audit=audit.slice(0,300);save('audit',audit);}
 function pushFeed(t,d){feed.unshift({t,d,at:new Date().toISOString()});feed=feed.slice(0,60);save('feed',feed);}
 function notify(icon,t,c,goTo){notifs.unshift({id:Date.now(),icon,t,c,go:goTo||null,at:new Date().toISOString(),read:false});save('notifs',notifs);refreshNotifDot();}
+
+/* ─── portals launcher (external advisor sign-in links; no integration) ─── */
+function renderPortals(){const m=document.getElementById('portalmenu');if(!m)return;
+  m.innerHTML='<div class="pmh">Advisor portals</div>'+
+    PORTALS.map((p,i)=>`<a href="${p_esc(p.url)}" target="_blank" rel="noopener noreferrer" role="menuitem" onclick="portalOpen(${i})"><span class="pi">⧉</span><span><b>${p_esc(p.name)}</b><small>${p_esc(p.note)}</small></span><span class="pex">↗</span></a>`).join('')+
+    '<div class="pmf">Opens the provider site in a new tab. Starman shares no client data with these links.</div>';}
+function p_esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function portalOpen(i){const p=PORTALS[i];if(p)logAudit('portal.open',p.name);}
+function togglePortals(e){if(e)e.stopPropagation();const m=document.getElementById('portalmenu'),b=document.getElementById('portalbtn');if(!m)return;
+  const open=!m.classList.contains('open');if(open&&!m.dataset.built){renderPortals();m.dataset.built='1';}
+  m.classList.toggle('open',open);if(b)b.setAttribute('aria-expanded',open?'true':'false');}
+document.addEventListener('click',e=>{const w=e.target.closest&&e.target.closest('.portalwrap');if(!w){const m=document.getElementById('portalmenu'),b=document.getElementById('portalbtn');if(m&&m.classList.contains('open')){m.classList.remove('open');if(b)b.setAttribute('aria-expanded','false');}}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){const m=document.getElementById('portalmenu');if(m)m.classList.remove('open');}});
 
 /* ─── derived intelligence ─── */
 const RISK_BAND={Conservative:[.20,.45],Balanced:[.40,.65],Growth:[.60,.85],Aggressive:[.75,1.0]};

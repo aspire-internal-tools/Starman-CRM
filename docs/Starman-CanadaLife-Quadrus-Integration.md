@@ -33,6 +33,14 @@ real data path.
   sanctioned **back-office / dealer position feeds**, **manual advisor-portal
   exports** (CSV/Excel/PDF), or a **third-party aggregator** that already holds feed
   agreements (Equisoft, Ativa, etc.). Ranked options in §3 and §5.
+- **Simplest "connection" of all — a portal launch button.** Before any data
+  integration, a button in Starman that opens the Canada Life (or Quadrus) advisor
+  portal in a new browser tab is the lowest-risk option. It is plain **navigation**:
+  the advisor signs in themselves, in their own session. No API, no scraping, no
+  stored credentials, and **no client data ever leaves Starman or appears in the
+  URL**. See Option F in §3. This is safe to ship today; the only open question is
+  branding neutrality (a carrier-labelled button in the chrome), which is a product
+  decision, not a compliance blocker.
 - **What must never happen:** portal screen-scraping, login automation, or storing
   carrier credentials. That is the whole reason the connectors are locked.
 
@@ -138,8 +146,34 @@ Automating the advisor portal login and scraping pages. **Never.** It breaks ter
 of service, stores/handles carrier credentials, and is the exact behaviour the lock
 exists to prevent. Not an option, listed only to name it as out of bounds.
 
-**Recommended sequence:** C now (manual CSV) → A or B when a feed is justified →
-D only if Canada Life offers sanctioned API access. Never E.
+### Option F — Portal launch button (deep link, zero-integration)
+A button in the Starman UI that opens the Canada Life advisor portal (and the same
+for the Quadrus/RepNet login) in a **new browser tab**. This is not a data
+integration at all — it is a convenience link so an advisor can jump to the carrier
+site without leaving Starman.
+- **Why it is safe:** it is plain navigation. Starman makes no carrier connection,
+  stores no credentials, pulls no data, and puts **no client data in the URL**. The
+  advisor authenticates in their own session on the carrier's own site. None of the
+  locked-connector rules are touched, because nothing is connected.
+- **Implementation:** a normal link opened with `target="_blank"` and
+  `rel="noopener noreferrer"`. The destination is a **configurable constant**
+  (public advisor sign-in landing page), never a hardcoded deep link with client or
+  account identifiers in it. Confirm the exact portal URLs with Canada Life / the
+  Quadrus dealer *(verify)* rather than guessing a deep path.
+- **The one product decision:** the prototype is otherwise **provider-neutral** (no
+  Canada Life or Quadrus logos/branding in the frontend, per the asset-display rule).
+  A button labelled with a carrier name is carrier branding in the chrome. That is a
+  deliberate product choice to make, not a compliance issue. Options to keep it
+  tasteful: a single neutral **"Portals"** launcher menu that lists the carrier
+  sign-in links inside it, rather than carrier logos sitting in the top bar.
+- **Pros:** ships today, zero risk, real day-to-day convenience.
+- **Cons:** no data flows (it is a shortcut, not sync); adds carrier naming to the
+  UI; URLs must be confirmed and kept current.
+- **Effort:** trivial. **Compliance:** clean (no connection, no data).
+
+**Recommended sequence:** F now (launch button, if the branding call is made) and
+C now (manual CSV) → A or B when a feed is justified → D only if Canada Life offers
+sanctioned API access. Never E.
 
 ---
 
@@ -189,6 +223,11 @@ from insurance needs/coverage.
 
 ## 6. Recommended path for Starman
 
+0. **Optionally add a portal launch button now** (Option F). Zero integration, zero
+   risk, immediate convenience. Only pending decision is whether to put carrier
+   naming in the UI (see the branding note in Option F) and confirming the portal
+   URLs. Recommended form: a neutral "Portals" launcher listing the carrier sign-in
+   links.
 1. **Ship manual CSV import first** (Option C for both providers). It is available
    now, needs no carrier connection, stores no credentials, and the locked-provider
    message already directs users to it. Build a clean field-mapping importer on top
