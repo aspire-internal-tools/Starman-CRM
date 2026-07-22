@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Starman — Advisor OS · Aspire CRM</title>
-<meta name="project" content="Starman"><meta name="version" content="2.2.0">
+<meta name="project" content="Starman"><meta name="version" content="2.3.0">
 <!-- ════════════════════════════════════════════════════════════════════
      STARMAN · "ADVISOR OS"  —  Aspire Investments & Insurance advisor platform
      Version: see <meta name="version"> above + docs/Starman-Version-History.md
@@ -569,7 +569,7 @@ label.lb{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:up
       <button class="btn pri" type="submit" style="width:100%;height:40px;justify-content:center;font-size:13.5px">Enter Starman →</button>
     </form>
     <div style="text-align:center;margin-top:14px"><button class="btn ghost" type="button" onclick="toggleTheme()" style="font-size:11px">◐ Light / dark</button></div>
-    <div class="lfoot">v2.2 · 2026-07-22 · Aspire Investments &amp; Insurance</div>
+    <div class="lfoot">v2.3 · 2026-07-22 · Aspire Investments &amp; Insurance</div>
   </div>
 </div>
 
@@ -1179,6 +1179,38 @@ function vCommand(){
    VIEW · CLIENTS + CLIENT 360
 ════════════════════════════════════════════════════════ */
 let _cliSort='aum',_cliFilter='All';
+/* ─── combine clients into a household (multi-select) ─── */
+let _cliSel=new Set();
+function surnameOf(n){const w=n.replace(/^the\s+/i,'').replace(/\b(family|trust|household|estate)\b/ig,'').replace(/&/g,' ').trim().split(/\s+/).filter(Boolean);return w[w.length-1]||n;}
+function cliSel(id,on){if(on)_cliSel.add(id);else _cliSel.delete(id);updateCliBar();}
+function updateCliBar(){const bar=$('#cliselbar');if(!bar)return;const n=_cliSel.size;bar.style.display=n>=1?'flex':'none';const c=$('#cliselcount');if(c)c.textContent=n;const b=$('#cliselbtn');if(b)b.disabled=n<2;
+  const aum=[..._cliSel].reduce((s,id)=>{const cl=clients.find(x=>x.id===id);return s+(cl?cl.aum:0);},0);const a=$('#cliselaum');if(a)a.textContent=fmtK(aum);}
+function cliSelClear(){_cliSel.clear();go('clients');}
+function combineHousehold(){
+  const ids=[..._cliSel];if(ids.length<2){toast('Select at least two clients to combine','!');return;}
+  const sel=clients.filter(c=>ids.includes(c.id));
+  const existing=sel.map(c=>c.hh).filter(Boolean);
+  const surnames=[...new Set(sel.map(c=>surnameOf(c.name)))];
+  const def=existing[0]||((surnames.length===1?surnames[0]:surnames.slice(0,2).join(' & '))+' Household');
+  const combined=sel.reduce((s,c)=>s+c.aum,0);
+  openModal('Combine into a household',`
+    <p class="muted" style="font-size:12.5px;margin-bottom:11px">Grouping ${ids.length} clients into one household. Their assets roll up together, and reviews can be prepared as a group.</p>
+    <div style="background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-bottom:13px">
+      ${sel.map(c=>`<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:3px 0"><span>${esc(c.name)}${c.hh?` <span class="muted" style="font-size:10.5px">(was ${esc(c.hh)})</span>`:''}</span><b>${fmtK(c.aum)}</b></div>`).join('')}
+      <div style="display:flex;justify-content:space-between;font-size:13px;padding:7px 0 0;margin-top:6px;border-top:1px solid var(--line)"><b>Combined AUM</b><b style="color:var(--emerald)">${fmtK(combined)}</b></div>
+    </div>
+    <label class="lb">Household name</label>
+    <input class="in" id="hh-name" value="${esc(def)}" placeholder="e.g. Chen Household">
+    <p class="faint" style="font-size:10.5px;margin-top:7px">Existing household names are matched, so you can also merge into a household that already exists.</p>`,
+  ()=>{
+    const name=($('#hh-name').value||'').trim();if(!name){toast('Give the household a name','!');return 'keep';}
+    sel.forEach(c=>{c.hh=name;});
+    persist();logAudit('Clients combined into household',name+' ('+ids.length+' clients)');
+    pushFeed('Household created',name+' · '+ids.length+' clients · '+fmtK(combined));
+    notify('⌂','Household created',name+' — '+ids.length+' clients, '+fmtK(combined),'clients');
+    _cliSel.clear();renderNav();toast('Combined into '+name,'⌂');go('clients');
+  },'Combine');
+}
 function vClients(){
   let list=clients.slice();
   if(_cliFilter!=='All')list=list.filter(c=>c.adv===_cliFilter);
@@ -1196,17 +1228,24 @@ function vClients(){
     <span class="muted" style="font-size:12px">${list.length} relationships · ${fmtK(list.reduce((s,c)=>s+c.aum,0))}</span>
     <button class="btn pri" style="margin-left:auto" onclick="newClientModal()">+ New client</button>
   </div>
+  <div class="muted" style="font-size:11.5px;margin:-6px 0 10px">Tip: tick two or more clients to combine them into a household.</div>
   <div class="card"><table>
-    <thead><tr><th>Client</th><th>Tier</th><th>AUM</th><th>Risk / Equity</th><th>KYC</th><th>Next review</th><th>Health</th></tr></thead>
+    <thead><tr><th style="width:26px"></th><th>Client</th><th>Tier</th><th>AUM</th><th>Risk / Equity</th><th>KYC</th><th>Next review</th><th>Health</th></tr></thead>
     <tbody>${list.map(c=>{const h=health(c),ks=kycState(c);return `<tr class="click" onclick="go('client360',${c.id})">
-      <td><div class="who"><span class="av" style="background:linear-gradient(135deg,${(ADVISORS[c.adv]||{}).color||'var(--emerald)'},#333)">${esc(c.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase())}</span><div><b>${esc(c.name)}</b><small>${esc(c.seg)} · ${advName(c.adv)}</small></div></div></td>
+      <td onclick="event.stopPropagation()" style="text-align:center"><input type="checkbox" onclick="event.stopPropagation()" onchange="cliSel(${c.id},this.checked)" ${_cliSel.has(c.id)?'checked':''} style="width:15px;height:15px;accent-color:var(--emerald);cursor:pointer"></td>
+      <td><div class="who"><span class="av" style="background:linear-gradient(135deg,${(ADVISORS[c.adv]||{}).color||'var(--emerald)'},#333)">${esc(c.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase())}</span><div><b>${esc(c.name)}</b><small>${esc(c.seg)} · ${advName(c.adv)}${c.hh?' · ⌂ '+esc(c.hh):''}</small></div></div></td>
       <td><span class="pill ${tierOf(c)==='A+'?'gold':tierOf(c)==='A'?'green':'grey'}">${tierOf(c)}</span></td>
       <td><b>${fmtK(c.aum)}</b></td>
       <td>${c.risk}<br><small class="muted">${Math.round(c.eq*100)}% equity</small></td>
       <td><span class="pill ${ks==='Overdue'?'red':ks==='Due soon'?'amber':'green'}">${ks}</span></td>
       <td>${c.review}</td>
       <td>${healthDot(h)}<span class="muted" style="font-size:11px">${h==='green'?'Healthy':h==='amber'?'Watch':'At Risk'}</span></td></tr>`;}).join('')}
-    </tbody></table></div>`;
+    </tbody></table></div>
+  <div id="cliselbar" style="display:${_cliSel.size>=1?'flex':'none'};position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:55;align-items:center;gap:14px;background:var(--bg2);border:1px solid var(--line2);box-shadow:var(--shadow-lg);border-radius:14px;padding:11px 18px">
+    <span style="font-size:12.5px;color:var(--ink)"><b id="cliselcount">${_cliSel.size}</b> selected · <span id="cliselaum">${fmtK([..._cliSel].reduce((s,id)=>{const cl=clients.find(x=>x.id===id);return s+(cl?cl.aum:0);},0))}</span> combined</span>
+    <button class="btn" onclick="cliSelClear()">Clear</button>
+    <button class="btn pri" id="cliselbtn" ${_cliSel.size<2?'disabled':''} onclick="combineHousehold()">⌂ Combine into household</button>
+  </div>`;
 }
 let _c360tab='overview';
 function vClient360(id){
@@ -4214,6 +4253,8 @@ function vSupervision(){
    for new posts and status changes, raises a notification.
 ════════════════════════════════════════════════════════ */
 let _boardFilter='All';
+let _boardSort='top';
+function setBoardSort(s){_boardSort=s;go('board');}
 function boardAgo(iso){const s=(Date.now()-new Date(iso))/1000;if(s<3600)return Math.max(1,Math.round(s/60))+'m ago';if(s<86400)return Math.round(s/3600)+'h ago';return Math.round(s/86400)+'d ago';}
 function catChip(c){return `<span style="font-family:var(--font-heading);font-weight:600;font-size:9px;letter-spacing:.04em;background:var(--chip);color:var(--ink2);border-radius:5px;padding:2px 7px">${esc(c)}</span>`;}
 function statusPill(st){const m={'New':['#6aa6ff','rgba(106,166,255,.14)'],'Under Review':['var(--amber)','rgba(255,180,84,.14)'],'Planned':['#a78bfa','rgba(167,139,250,.16)'],'In Progress':['var(--emerald)','var(--emerald-glow)'],'Done':['var(--muted)','var(--chip)']};const c=m[st]||m['New'];return `<span style="font-family:var(--font-heading);font-weight:600;font-size:9.5px;padding:2px 9px;border-radius:20px;color:${c[0]};background:${c[1]}">${esc(st)}</span>`;}
@@ -4275,11 +4316,14 @@ function boardDetailBody(t){
 function boardOpen(id){const t=tickets.find(x=>x.id===id);if(!t)return;_boardModalId=id;openModal('Board post',boardDetailBody(t),()=>{},'Close',660);}
 function vBoard(){
   const total=tickets.length,nw=tickets.filter(t=>t.status==='New').length,prog=tickets.filter(t=>t.status==='In Progress'||t.status==='Planned').length,done=tickets.filter(t=>t.status==='Done').length;
-  const list=tickets.slice().filter(t=>_boardFilter==='All'||t.status===_boardFilter).sort((a,b)=>(b.votes.length-a.votes.length)||(new Date(b.at)-new Date(a.at)));
+  const list=tickets.slice().filter(t=>_boardFilter==='All'||t.status===_boardFilter).sort((a,b)=>_boardSort==='new'?(new Date(b.at)-new Date(a.at)):((b.votes.length-a.votes.length)||(new Date(b.at)-new Date(a.at))));
   const tabs=['All',...TICKET_STATUS].map(s=>{const n=s==='All'?total:tickets.filter(t=>t.status===s).length;const on=_boardFilter===s;return `<button onclick="setBoardFilter('${s}')" style="border:1px solid ${on?'var(--emerald)':'var(--line)'};background:${on?'var(--emerald-glow)':'var(--panel)'};color:var(--ink);border-radius:20px;padding:5px 13px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:var(--font-heading)">${s} <span style="opacity:.55">${n}</span></button>`;}).join(' ');
-  const cards=list.length?list.map(t=>{const voted=t.votes.includes(ME);return `
+  const cards=list.length?list.map((t,idx)=>{const voted=t.votes.includes(ME);const rank=_boardSort==='top'&&_boardFilter==='All'?idx+1:0;return `
     <div onclick="boardOpen(${t.id})" style="border:1px solid var(--line);background:var(--panel);border-radius:var(--r-m);padding:14px 16px;margin-bottom:11px;cursor:pointer;display:flex;gap:14px" onmouseover="this.style.borderColor='var(--line2)'" onmouseout="this.style.borderColor='var(--line)'">
-      <button onclick="event.stopPropagation();boardVote(${t.id})" title="Vote for this" style="flex:none;width:48px;border:1px solid ${voted?'var(--emerald)':'var(--line)'};background:${voted?'var(--emerald-glow)':'transparent'};border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:7px 0;cursor:pointer;color:${voted?'var(--emerald)':'var(--ink2)'}"><span style="font-size:12px">▲</span><span style="font-family:var(--font-heading);font-weight:700;font-size:15px">${t.votes.length}</span></button>
+      <div style="flex:none;width:48px;display:flex;flex-direction:column;align-items:center;gap:5px">
+        ${rank?`<span style="font-family:var(--font-heading);font-weight:700;font-size:11px;color:${rank<=3?'var(--gold)':'var(--faint)'}">#${rank}</span>`:''}
+        <button onclick="event.stopPropagation();boardVote(${t.id})" title="Vote for this" style="width:48px;border:1px solid ${voted?'var(--emerald)':'var(--line)'};background:${voted?'var(--emerald-glow)':'transparent'};border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:7px 0;cursor:pointer;color:${voted?'var(--emerald)':'var(--ink2)'}"><span style="font-size:12px">▲</span><span style="font-family:var(--font-heading);font-weight:700;font-size:15px">${t.votes.length}</span></button>
+      </div>
       <div style="flex:1;min-width:0">
         <div style="display:flex;gap:7px;align-items:center;margin-bottom:5px">${catChip(t.cat)}${statusPill(t.status)}</div>
         <div style="font-family:var(--font-heading);font-weight:600;font-size:15px;color:var(--ink)">${esc(t.title)}</div>
@@ -4295,7 +4339,14 @@ function vBoard(){
   </div>
   <div style="display:grid;grid-template-columns:1fr 244px;gap:18px;align-items:start;margin-top:14px">
     <div>
-      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">${tabs}</div>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:7px">
+        <div style="display:flex;gap:7px;flex-wrap:wrap">${tabs}</div>
+        <div style="margin-left:auto;display:flex;border:1px solid var(--line);border-radius:20px;overflow:hidden">
+          <button onclick="setBoardSort('top')" style="border:none;cursor:pointer;font-family:var(--font-heading);font-weight:600;font-size:11px;padding:5px 12px;background:${_boardSort==='top'?'var(--emerald)':'transparent'};color:${_boardSort==='top'?'#fff':'var(--ink2)'}">Top voted</button>
+          <button onclick="setBoardSort('new')" style="border:none;cursor:pointer;font-family:var(--font-heading);font-weight:600;font-size:11px;padding:5px 12px;background:${_boardSort==='new'?'var(--emerald)':'transparent'};color:${_boardSort==='new'?'#fff':'var(--ink2)'}">Newest</button>
+        </div>
+      </div>
+      <div class="muted" style="font-size:11px;margin-bottom:13px">${_boardSort==='top'?(_boardFilter==='All'?'Ranked by votes, most supported first.':'Most voted first, within '+_boardFilter+'.'):'Newest posts first.'}</div>
       ${cards}
     </div>
     <div>
