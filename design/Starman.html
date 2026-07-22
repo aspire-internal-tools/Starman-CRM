@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Starman — Advisor OS · Aspire CRM</title>
-<meta name="project" content="Starman"><meta name="version" content="2.1.0">
+<meta name="project" content="Starman"><meta name="version" content="2.2.0">
 <!-- ════════════════════════════════════════════════════════════════════
      STARMAN · "ADVISOR OS"  —  Aspire Investments & Insurance advisor platform
      Version: see <meta name="version"> above + docs/Starman-Version-History.md
@@ -562,14 +562,14 @@ label.lb{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:up
     <div class="lsub">ASPIRE INVESTMENTS &amp; INSURANCE</div>
     <form id="loginForm" autocomplete="on" novalidate>
       <label class="lb">Email</label>
-      <input class="in" id="lemail" type="email" value="andrew@aspire.ca" autocomplete="username" required style="margin-bottom:13px">
+      <input class="in" id="lemail" type="email" value="jack@aspire.ca" autocomplete="username" required style="margin-bottom:13px">
       <label class="lb">Password</label>
       <input class="in" id="lpass" type="password" value="starman123" autocomplete="current-password" required style="margin-bottom:20px">
       <div class="faint" id="loginError" aria-live="polite" style="min-height:16px;margin:-10px 0 10px;color:var(--amber);font-size:11px"></div>
       <button class="btn pri" type="submit" style="width:100%;height:40px;justify-content:center;font-size:13.5px">Enter Starman →</button>
     </form>
     <div style="text-align:center;margin-top:14px"><button class="btn ghost" type="button" onclick="toggleTheme()" style="font-size:11px">◐ Light / dark</button></div>
-    <div class="lfoot">v2.1 · 2026-07-22 · Aspire Investments &amp; Insurance</div>
+    <div class="lfoot">v2.2 · 2026-07-22 · Aspire Investments &amp; Insurance</div>
   </div>
 </div>
 
@@ -583,8 +583,8 @@ label.lb{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:up
     </div>
     <nav class="nav" id="nav"></nav>
     <div class="railfoot" onclick="go('settings')" title="Profile & settings">
-      <div class="av">AL</div>
-      <div><b>Andrew Lee</b><small>President · CFP, CLU</small></div>
+      <div class="av" id="rf-av">AL</div>
+      <div><b id="rf-name">Andrew Lee</b><small id="rf-role">President · CFP, CLU</small></div>
       <span class="st" title="Online"></span>
     </div>
   </aside>
@@ -697,9 +697,35 @@ const save=(k,v)=>{try{localStorage.setItem('sm4_'+k,JSON.stringify(v));}catch(e
 const load=(k,d)=>{try{const v=localStorage.getItem('sm4_'+k);return v?JSON.parse(v):d;}catch(e){return d;}};
 
 /* ─── seed book of business ─── */
-const ADVISORS_SEED={AL:{name:'Andrew Lee',role:'President · CFP, CLU',color:'#e6b94d',email:'andrew@aspire.ca'},JB:{name:'Jasmine Brar',role:'Senior Advisor · CFP',color:'#6aa6ff',email:'jasmine@aspire.ca'},EF:{name:'Ethan Fox',role:'Advisor · QAFP',color:'#a78bfa',email:'ethan@aspire.ca'},KN:{name:'Kira Novak',role:'Insurance Specialist · CLU',color:'#ff8fab',email:'kira@aspire.ca'}};
+/* ─── Aspire team (source: aspireplanning.ca/our-team). Every employee has a
+   profile + account. Keys AL/JB/EF/KN are pre-existing client assignments and
+   are kept stable. Demo login password is the same public demo password used
+   throughout this prototype (starman123) — no real per-person secrets. ─── */
+const ADVISORS_SEED={
+ AL:{name:'Andrew Lee',role:'President · CFP, CLU',color:'#e6b94d',email:'andrew@aspire.ca',admin:true,advisor:true},
+ JB:{name:'Jillian Brockman',role:'Partner · Associate Advisor',color:'#6aa6ff',email:'jillian@aspire.ca',advisor:true},
+ EF:{name:'Elly Fayad',role:'Associate Advisor · EPC',color:'#a78bfa',email:'elly@aspire.ca',advisor:true},
+ KN:{name:'Kaiden Nicholson',role:'Associate Advisor',color:'#ff8fab',email:'kaiden@aspire.ca',advisor:true},
+ TT:{name:'Ted Thompson',role:'Associate Advisor',color:'#4fc9ae',email:'ted@aspire.ca',advisor:true},
+ DB:{name:'Doug Bremness',role:'Associate Advisor',color:'#f5a25d',email:'doug@aspire.ca',advisor:true},
+ HM:{name:'Hudson Murray',role:'Associate Advisor',color:'#7ec8f2',email:'hudson@aspire.ca',advisor:true},
+ TM:{name:'Tim Murdock',role:'Financial Advisor · EPC',color:'#d8a657',email:'tim@aspire.ca',advisor:true},
+ DM:{name:'Danielle Mantai',role:'Executive Assistant',color:'#b0a8f0',email:'danielle@aspire.ca'},
+ SS:{name:'Sonya Sidhu',role:'Administrative Assistant',color:'#9ad0c0',email:'sonya@aspire.ca'},
+ JD:{name:'Jack Duzan',role:'Intern',color:'#88d0a0',email:'jack@aspire.ca'}
+};
 let ADVISORS=load('advisors',null)||ADVISORS_SEED;
+/* upgrade older saved rosters (pre real-team) to the current team automatically */
+if(!ADVISORS.TT||(ADVISORS.JB&&ADVISORS.JB.name==='Jasmine Brar')){ADVISORS=ADVISORS_SEED;save('advisors',ADVISORS);}
 const advName=k=>(ADVISORS[k]||{}).name||k;
+const advColor=k=>(ADVISORS[k]||{}).color||'#8a94ab';
+const initials=n=>n.split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase();
+/* current signed-in user + demo auth */
+const DEMO_PW='starman123';
+let ME=load('me','JD');
+function acctByEmail(e){e=(e||'').trim().toLowerCase();return Object.keys(ADVISORS).find(k=>(ADVISORS[k].email||'').toLowerCase()===e)||null;}
+const me=()=>ADVISORS[ME]||ADVISORS.AL;
+const isAdmin=()=>!!me().admin;
 /* ─── integrations / API connectors (from the 2.x framework) ─── */
 const INTG_SEED=[
  {id:'meta',name:'Meta Ads Manager',desc:'Lead forms → pipeline (Graph API)',color:'#1877f2',status:'off',fields:['App ID','App Secret','Lead Form ID']},
@@ -812,8 +838,21 @@ let tasks=load('tasks',null)||seedTasks();
 let notifs=load('notifs',null)||seedNotifs();
 let feed=load('feed',null)||seedFeed();
 let audit=load('audit',[]);
-function persist(){save('clients',clients);save('deals',deals);save('tasks',tasks);save('notifs',notifs);save('feed',feed);save('audit',audit);}
-function logAudit(act,obj){audit.unshift({act,obj:obj||'',by:'AL',at:new Date().toISOString()});audit=audit.slice(0,300);save('audit',audit);}
+/* ─── Bulletin Board: shared tickets for improvements & recommendations ─── */
+const TICKET_CATS=['Improvement','Feature','Bug','Process','Recommendation'];
+const TICKET_STATUS=['New','Under Review','Planned','In Progress','Done'];
+function seedTickets(){const d=n=>new Date(Date.now()-n*36e5).toISOString();return [
+ {id:9001,title:'Add a one-click KYC refresh reminder email',body:'When a client hits Due Soon, let us send a pre-drafted refresh reminder straight from the Compliance list instead of copying into Outlook.',cat:'Improvement',status:'Planned',author:'JB',votes:['AL','EF','KN','TT'],at:d(52),comments:[{by:'AL',text:'Agreed. Compliance-first, and it saves the whole team time.',at:d(40)}]},
+ {id:9002,title:'Households view: show combined AUM at the top',body:'Right now I add it up by hand. A roll-up total per household would make review prep much faster.',cat:'Feature',status:'In Progress',author:'EF',votes:['JB','KN','HM','DB','AL'],at:d(46),comments:[]},
+ {id:9003,title:'Pipeline drag sometimes snaps back on tablet',body:'On the iPad, dragging a deal to the next stage occasionally reverts. Works fine on desktop.',cat:'Bug',status:'Under Review',author:'HM',votes:['KN','TT'],at:d(30),comments:[{by:'JD',text:'I can reproduce on iPad Safari. Logging details.',at:d(22)}]},
+ {id:9004,title:'Recommendation: standard note template for annual reviews',body:'Proposing a shared template so every advisor documents reviews the same way. Helps compliance spot checks.',cat:'Recommendation',status:'New',author:'TM',votes:['AL','DB'],at:d(9),comments:[]},
+ {id:9005,title:'Dark mode for the client-facing summary export',body:'A few clients asked for an easier-to-read printout. A cleaner light export would help.',cat:'Improvement',status:'New',author:'KN',votes:['EF'],at:d(4),comments:[]},
+ {id:9006,title:'Add a team directory to the Bulletin Board',body:'Quick way to see who is who, their role, and what they have posted.',cat:'Feature',status:'Done',author:'DM',votes:['AL','JB','SS','JD'],at:d(70),comments:[{by:'AL',text:'Shipped. See the roster on the right.',at:d(20)}]}
+];}
+let tickets=load('tickets',null)||seedTickets();
+function persist(){save('clients',clients);save('deals',deals);save('tasks',tasks);save('notifs',notifs);save('feed',feed);save('audit',audit);save('tickets',tickets);}
+function saveTickets(){save('tickets',tickets);}
+function logAudit(act,obj){audit.unshift({act,obj:obj||'',by:(typeof ME!=='undefined'?ME:'AL'),at:new Date().toISOString()});audit=audit.slice(0,300);save('audit',audit);}
 function pushFeed(t,d){feed.unshift({t,d,at:new Date().toISOString()});feed=feed.slice(0,60);save('feed',feed);}
 function notify(icon,t,c,goTo){notifs.unshift({id:Date.now(),icon,t,c,go:goTo||null,at:new Date().toISOString(),read:false});save('notifs',notifs);refreshNotifDot();}
 
@@ -919,11 +958,12 @@ const NAV=[
  {k:'intelligence',ic:'✧',label:'AI Agent'},
  {k:'drafts',ic:'✎',label:'Drafts',kbd:'g x',badge:()=>drafts.filter(d=>d.status==='draft').length},
  {k:'transcripts',ic:'≣',label:'Meeting Intel',badge:()=>tQueue.filter(q=>q.status==='review').length},
+ {k:'board',ic:'▣',label:'Bulletin Board',badge:()=>tickets.filter(t=>t.status==='New').length},
  {k:'vault',ic:'❏',label:'Data Vault',badge:()=>docs.length},
  {k:'residency',ic:'◇',label:'Data Residency'},
  {k:'settings',ic:'⚙',label:'Settings'}
 ];
-const TITLES={command:'Command Centre',suggestions:'Household Suggestions',clients:'Clients',client360:'Client 360',pipeline:'Pipeline',tasks:'Tasks',compliance:'Compliance',supervision:'Compliance & Supervision',planning:'Financial Planning',calculators:'Financial Calculators',calendar:'Calendar',reports:'Reports & Analytics',intelligence:'Starman AI Agent',drafts:'Drafts & Approvals',transcripts:'Meeting Intelligence',vault:'Data Vault',residency:'Data Residency — Canada',settings:'Settings'};
+const TITLES={command:'Command Centre',suggestions:'Household Suggestions',clients:'Clients',client360:'Client 360',pipeline:'Pipeline',tasks:'Tasks',compliance:'Compliance',supervision:'Compliance & Supervision',planning:'Financial Planning',calculators:'Financial Calculators',calendar:'Calendar',reports:'Reports & Analytics',intelligence:'Starman AI Agent',drafts:'Drafts & Approvals',transcripts:'Meeting Intelligence',board:'Bulletin Board',vault:'Data Vault',residency:'Data Residency — Canada',settings:'Settings'};
 let route='command', routeArg=null;
 function renderNav(){
   $('#nav').innerHTML=NAV.map((n,i)=>n.grp?`<div class="grp" role="presentation">${n.grp}</div>`
@@ -2638,6 +2678,11 @@ function doLogin(e){
   if(err)err.textContent='';
   if(!email||!email.value.trim()){if(err)err.textContent='Enter your email to continue.';if(email)email.focus();return false;}
   if(!pass||!pass.value.trim()){if(err)err.textContent='Enter your password to continue.';if(pass)pass.focus();return false;}
+  const key=acctByEmail(email.value);
+  if(!key){if(err)err.textContent='No Aspire account matches that email.';email.focus();return false;}
+  if(pass.value!==DEMO_PW){if(err)err.textContent='Incorrect password for this account.';pass.focus();return false;}
+  ME=key;save('me',ME);
+  try{logAudit('Signed in',ADVISORS[ME].name);}catch(_){}
   _loginBusy=true;
   save('auth',true);
   const card=document.querySelector('.lcard');
@@ -2663,8 +2708,16 @@ function bindLoginForm(){
     form.dataset.bound='1';
   }
 }
+function renderRailfoot(){
+  const u=me();
+  const av=$('#rf-av'),nm=$('#rf-name'),rl=$('#rf-role');
+  if(av){av.textContent=initials(u.name);av.style.background=`linear-gradient(135deg,${u.color},#0a5c44)`;av.style.color='#fff';}
+  if(nm)nm.textContent=u.name;
+  if(rl)rl.textContent=u.role;
+}
 function startApp(animated){
   $('#app').style.visibility='visible';
+  renderRailfoot();
   if(animated&&!matchMedia('(prefers-reduced-motion: reduce)').matches){
     $('#app').classList.add('boot');setTimeout(()=>$('#app').classList.remove('boot'),1500);
   }
@@ -4154,7 +4207,114 @@ function vSupervision(){
   </div>`;
 }
 
-const VIEWS={command:vCommand,suggestions:vSuggestions,clients:vClients,client360:vClient360,pipeline:vPipeline,tasks:vTasks,compliance:vCompliance,supervision:vSupervision,planning:vPlanning,calculators:vCalculators,calendar:vCalendar,reports:vReports,intelligence:vAgent,drafts:vDrafts,transcripts:vTranscripts,vault:vDataVault,residency:vResidency,settings:vSettings};
+/* ════════════════════════════════════════════════════════
+   VIEW · BULLETIN BOARD (shared ticket system)
+   Advisors post improvements & recommendations, vote, and discuss.
+   Admins (President) can set status. Every action is audit-logged and,
+   for new posts and status changes, raises a notification.
+════════════════════════════════════════════════════════ */
+let _boardFilter='All';
+function boardAgo(iso){const s=(Date.now()-new Date(iso))/1000;if(s<3600)return Math.max(1,Math.round(s/60))+'m ago';if(s<86400)return Math.round(s/3600)+'h ago';return Math.round(s/86400)+'d ago';}
+function catChip(c){return `<span style="font-family:var(--font-heading);font-weight:600;font-size:9px;letter-spacing:.04em;background:var(--chip);color:var(--ink2);border-radius:5px;padding:2px 7px">${esc(c)}</span>`;}
+function statusPill(st){const m={'New':['#6aa6ff','rgba(106,166,255,.14)'],'Under Review':['var(--amber)','rgba(255,180,84,.14)'],'Planned':['#a78bfa','rgba(167,139,250,.16)'],'In Progress':['var(--emerald)','var(--emerald-glow)'],'Done':['var(--muted)','var(--chip)']};const c=m[st]||m['New'];return `<span style="font-family:var(--font-heading);font-weight:600;font-size:9.5px;padding:2px 9px;border-radius:20px;color:${c[0]};background:${c[1]}">${esc(st)}</span>`;}
+function avatarChip(k){const u=ADVISORS[k]||{name:k,color:'#8a94ab'};return `<span style="display:inline-flex;align-items:center;gap:6px"><span style="width:20px;height:20px;border-radius:50%;background:${u.color};color:#08110c;font-weight:800;font-size:9px;display:inline-flex;align-items:center;justify-content:center">${initials(u.name)}</span><span style="font-size:11px;color:var(--ink2)">${esc(u.name)}</span></span>`;}
+let _boardModalId=null;
+function setBoardFilter(s){_boardFilter=s;go('board');}
+function boardNew(){
+  openModal('New board post',`
+    <label class="lb">Title</label>
+    <input class="in" id="bk-title" placeholder="A short, clear summary" style="margin-bottom:11px">
+    <label class="lb">Category</label>
+    <select class="in" id="bk-cat" style="margin-bottom:11px">${TICKET_CATS.map(c=>`<option>${c}</option>`).join('')}</select>
+    <label class="lb">Details</label>
+    <textarea class="in" id="bk-body" rows="5" placeholder="What is the improvement or recommendation, and why does it help?"></textarea>`,
+  ()=>{
+    const title=($('#bk-title').value||'').trim(),body=($('#bk-body').value||'').trim(),cat=$('#bk-cat').value;
+    if(!title){toast('Add a title first','!');return 'keep';}
+    const t={id:Date.now(),title,body,cat,status:'New',author:ME,votes:[],at:new Date().toISOString(),comments:[]};
+    tickets.unshift(t);saveTickets();logAudit('Board post created',title);pushFeed('Board post',title+' · '+cat);
+    notify('▣',cat==='Recommendation'?'New recommendation posted':'New board post',title+' — '+me().name,'board');
+    renderNav();toast('Posted to the board','▣');go('board');
+  },'Post');
+}
+function boardVote(id){
+  const t=tickets.find(x=>x.id===id);if(!t)return;
+  const i=t.votes.indexOf(ME);if(i>=0)t.votes.splice(i,1);else{t.votes.push(ME);logAudit('Upvoted board post',t.title);}
+  saveTickets();renderNav();
+  if(_boardModalId===id&&$('#mov').classList.contains('show'))boardRefreshModal(id);else if(route==='board')go('board');
+}
+function boardComment(id){
+  const t=tickets.find(x=>x.id===id);if(!t)return;const el=$('#bk-comment');const tx=((el&&el.value)||'').trim();if(!tx)return;
+  t.comments.push({by:ME,text:tx,at:new Date().toISOString()});saveTickets();logAudit('Commented on board post',t.title);
+  if(t.author!==ME)notify('💬','New comment on your post',t.title,'board');
+  renderNav();boardRefreshModal(id);
+}
+function boardStatus(id,st){
+  const t=tickets.find(x=>x.id===id);if(!t||!isAdmin())return;t.status=st;saveTickets();logAudit('Board status set to '+st,t.title);
+  if(t.author!==ME)notify('▣','Your post is now '+st,t.title,'board');
+  renderNav();boardRefreshModal(id);toast('Status updated to '+st,'▣');
+}
+function boardRefreshModal(id){const t=tickets.find(x=>x.id===id);if(!t)return;const mb=$('#mbody');if(mb&&$('#mov').classList.contains('show'))mb.innerHTML=boardDetailBody(t);}
+function boardDetailBody(t){
+  const voted=t.votes.includes(ME);
+  const comments=t.comments.length?t.comments.map(c=>`<div style="display:flex;gap:8px;margin-bottom:10px"><span style="width:22px;height:22px;border-radius:50%;background:${advColor(c.by)};color:#08110c;font-weight:800;font-size:9px;display:flex;align-items:center;justify-content:center;flex:none">${initials(advName(c.by))}</span><div style="flex:1"><div style="font-size:11px"><b style="color:var(--ink)">${esc(advName(c.by))}</b> <span style="color:var(--faint)">· ${boardAgo(c.at)}</span></div><div style="font-size:12px;color:var(--ink2)">${esc(c.text)}</div></div></div>`).join(''):'<div style="font-size:12px;color:var(--muted)">No comments yet. Start the discussion.</div>';
+  const statusCtl=isAdmin()?`<div style="margin-top:12px;padding:10px 12px;background:var(--panel2);border:1px solid var(--line);border-radius:10px"><div class="lb" style="margin:0 0 4px">Set status (admin)</div><select class="in" onchange="boardStatus(${t.id},this.value)">${TICKET_STATUS.map(s=>`<option${s===t.status?' selected':''}>${s}</option>`).join('')}</select></div>`:'';
+  return `
+    <div style="display:flex;gap:7px;align-items:center;margin-bottom:8px">${catChip(t.cat)}${statusPill(t.status)}</div>
+    <div style="font-family:var(--font-heading);font-weight:600;font-size:18px;color:var(--ink);margin-bottom:6px">${esc(t.title)}</div>
+    <div style="font-size:12.5px;color:var(--ink2);line-height:1.6;margin-bottom:12px;white-space:pre-wrap">${esc(t.body)}</div>
+    <div style="display:flex;gap:14px;align-items:center;font-size:11px;color:var(--faint);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:10px 0;margin-bottom:12px">
+      ${avatarChip(t.author)}<span>· ${boardAgo(t.at)}</span>
+      <button onclick="boardVote(${t.id})" style="margin-left:auto;border:1px solid ${voted?'var(--emerald)':'var(--line)'};background:${voted?'var(--emerald-glow)':'var(--panel)'};color:${voted?'var(--emerald)':'var(--ink)'};border-radius:20px;padding:5px 14px;font-weight:700;font-size:11.5px;cursor:pointer">▲ ${t.votes.length} ${voted?'Voted':'Vote'}</button>
+    </div>
+    ${statusCtl}
+    <div class="lb" style="margin-top:14px">Discussion (${t.comments.length})</div>
+    <div style="margin:8px 0 12px">${comments}</div>
+    <div style="display:flex;gap:8px"><input class="in" id="bk-comment" placeholder="Add a comment" style="flex:1" onkeydown="if(event.key==='Enter')boardComment(${t.id})"><button class="btn pri" onclick="boardComment(${t.id})">Send</button></div>`;
+}
+function boardOpen(id){const t=tickets.find(x=>x.id===id);if(!t)return;_boardModalId=id;openModal('Board post',boardDetailBody(t),()=>{},'Close',660);}
+function vBoard(){
+  const total=tickets.length,nw=tickets.filter(t=>t.status==='New').length,prog=tickets.filter(t=>t.status==='In Progress'||t.status==='Planned').length,done=tickets.filter(t=>t.status==='Done').length;
+  const list=tickets.slice().filter(t=>_boardFilter==='All'||t.status===_boardFilter).sort((a,b)=>(b.votes.length-a.votes.length)||(new Date(b.at)-new Date(a.at)));
+  const tabs=['All',...TICKET_STATUS].map(s=>{const n=s==='All'?total:tickets.filter(t=>t.status===s).length;const on=_boardFilter===s;return `<button onclick="setBoardFilter('${s}')" style="border:1px solid ${on?'var(--emerald)':'var(--line)'};background:${on?'var(--emerald-glow)':'var(--panel)'};color:var(--ink);border-radius:20px;padding:5px 13px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:var(--font-heading)">${s} <span style="opacity:.55">${n}</span></button>`;}).join(' ');
+  const cards=list.length?list.map(t=>{const voted=t.votes.includes(ME);return `
+    <div onclick="boardOpen(${t.id})" style="border:1px solid var(--line);background:var(--panel);border-radius:var(--r-m);padding:14px 16px;margin-bottom:11px;cursor:pointer;display:flex;gap:14px" onmouseover="this.style.borderColor='var(--line2)'" onmouseout="this.style.borderColor='var(--line)'">
+      <button onclick="event.stopPropagation();boardVote(${t.id})" title="Vote for this" style="flex:none;width:48px;border:1px solid ${voted?'var(--emerald)':'var(--line)'};background:${voted?'var(--emerald-glow)':'transparent'};border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:7px 0;cursor:pointer;color:${voted?'var(--emerald)':'var(--ink2)'}"><span style="font-size:12px">▲</span><span style="font-family:var(--font-heading);font-weight:700;font-size:15px">${t.votes.length}</span></button>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;gap:7px;align-items:center;margin-bottom:5px">${catChip(t.cat)}${statusPill(t.status)}</div>
+        <div style="font-family:var(--font-heading);font-weight:600;font-size:15px;color:var(--ink)">${esc(t.title)}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(t.body)}</div>
+        <div style="display:flex;gap:14px;align-items:center;margin-top:10px">${avatarChip(t.author)}<span style="font-size:11px;color:var(--faint)">· ${boardAgo(t.at)}</span><span style="font-size:11px;color:var(--faint)">💬 ${t.comments.length}</span></div>
+      </div>
+    </div>`;}).join(''):'<div style="color:var(--muted);padding:36px;text-align:center;border:1px dashed var(--line);border-radius:var(--r-m)">No posts in this view yet.</div>';
+  const roster=Object.keys(ADVISORS).map(k=>{const u=ADVISORS[k];return `<div style="display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px solid var(--line)"><span style="width:26px;height:26px;border-radius:50%;background:${u.color};color:#08110c;font-weight:800;font-size:10px;display:flex;align-items:center;justify-content:center;flex:none">${initials(u.name)}</span><div style="min-width:0"><div style="font-size:12px;color:var(--ink);font-weight:600">${esc(u.name)}${k===ME?' <span style="color:var(--emerald);font-size:9px">(you)</span>':''}${u.admin?' <span style="font-size:8px;background:var(--gold-glow);color:var(--gold);border-radius:4px;padding:1px 5px">Admin</span>':''}</div><div style="font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(u.role)}</div></div></div>`;}).join('');
+  return `
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+    <div><h2 style="margin:0">Bulletin Board</h2><div style="color:var(--muted);font-size:12.5px;margin-top:3px;max-width:560px">Shared improvements and recommendations. Post an idea, vote it up, and discuss. ${isAdmin()?'You are an admin, so you can set the status of each post.':'Signed in as '+esc(me().name)+'.'}</div></div>
+    <button class="btn pri" onclick="boardNew()">+ New post</button>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 244px;gap:18px;align-items:start;margin-top:14px">
+    <div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">${tabs}</div>
+      ${cards}
+    </div>
+    <div>
+      <div style="border:1px solid var(--line);background:var(--panel);border-radius:var(--r-m);padding:13px 15px;margin-bottom:14px">
+        <div style="font-family:var(--font-heading);font-weight:600;font-size:12px;color:var(--ink);margin-bottom:8px">This board</div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:var(--ink2)"><span>Total posts</span><b>${total}</b></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:var(--ink2)"><span>New</span><b>${nw}</b></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:var(--ink2)"><span>Planned / in progress</span><b>${prog}</b></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:var(--ink2)"><span>Done</span><b>${done}</b></div>
+        <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:var(--ink2)"><span>Your votes</span><b>${tickets.filter(t=>t.votes.includes(ME)).length}</b></div>
+      </div>
+      <div style="border:1px solid var(--line);background:var(--panel);border-radius:var(--r-m);padding:13px 15px">
+        <div style="font-family:var(--font-heading);font-weight:600;font-size:12px;color:var(--ink);margin-bottom:6px">Aspire team (${Object.keys(ADVISORS).length})</div>
+        ${roster}
+      </div>
+    </div>
+  </div>`;
+}
+const VIEWS={command:vCommand,suggestions:vSuggestions,clients:vClients,client360:vClient360,pipeline:vPipeline,tasks:vTasks,compliance:vCompliance,supervision:vSupervision,planning:vPlanning,calculators:vCalculators,calendar:vCalendar,reports:vReports,intelligence:vAgent,drafts:vDrafts,transcripts:vTranscripts,board:vBoard,vault:vDataVault,residency:vResidency,settings:vSettings};
 
 /* boot */
 (function boot(){
