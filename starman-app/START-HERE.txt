@@ -1,0 +1,63 @@
+STARMAN CRM — HOW TO RUN IT ON DOCKER (Mac, no coding needed)
+=============================================================
+
+ONE-TIME SETUP
+--------------
+1. Install Docker Desktop (free):
+   https://www.docker.com/products/docker-desktop
+   - Download "Docker Desktop for Mac" (pick Apple chip or Intel chip to match your Mac).
+   - Open the downloaded file and drag Docker into Applications.
+2. Open the "Docker" app from Applications. Wait until the little whale icon
+   in your top menu bar stops animating and says "Docker Desktop is running."
+   (Leave Docker open whenever you want to use the CRM.)
+
+
+EVERY TIME YOU WANT TO START THE CRM
+------------------------------------
+1. Open the "Terminal" app:
+   - Press Command (⌘) + Spacebar, type "Terminal", press Return.
+2. Copy-paste this line and press Return:
+
+       cd ~/Desktop/Destiny/CRM/starman-app
+
+3. Copy-paste this line and press Return:
+
+       docker compose up --build
+
+   The FIRST time takes a few minutes (it downloads pieces). You'll see lots of
+   text scroll by. Wait until you see a line like:
+       Starman API listening on http://localhost:4000
+
+4. Open your web browser (Chrome/Safari) and go to:
+
+       http://localhost:4000/
+
+5. Log in with:
+       Email:    andrew@aspire.ca
+       Password: starman123
+
+
+TO STOP THE CRM
+---------------
+- Click back in the Terminal window and press:  Control (^) + C
+- (Optional) to fully shut down, paste:  docker compose down
+
+
+IF SOMETHING LOOKS BROKEN
+-------------------------
+- Make sure the Docker app is open and running first.
+- In Terminal press Control+C, then run:  docker compose up --build   again.
+
+
+CHANGING HOW IT LOOKS (you can do this anytime)
+-----------------------------------------------
+Your CRM's look + front page live in this file:
+       ~/Desktop/Destiny/CRM/design/Starman.html
+
+- Open it with a text editor (right-click > Open With > TextEdit, or better, the
+  free "VS Code" editor).
+- The COLORS/STYLING are near the top, inside the big <style> ... </style> section.
+- The LOGIN / FRONT PAGE wording is further down in the same file.
+- Save the file, then just REFRESH your browser tab. Changes show up immediately
+  (no need to rebuild). If you don't see a change, do a hard refresh:
+  Command (⌘) + Shift + R.

@@ -1,0 +1,12 @@
+{
+  "campaign_name": "Spring Retirement Webinar 2026",
+  "adset_name": "Edmonton 55+ Lookalike",
+  "form_name": "Free Retirement Review",
+  "created_time": "2026-05-28T15:42:00Z",
+  "field_data": [
+    {"name": "full_name", "values": ["Patricia Nguyen"]},
+    {"name": "email", "values": ["p.nguyen@example.ca"]},
+    {"name": "phone_number", "values": ["(780) 555-0911"]},
+    {"name": "consent", "values": ["true"]}
+  ]
+}

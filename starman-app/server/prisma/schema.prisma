@@ -1,0 +1,386 @@
+// Starman CRM — production data model (PostgreSQL via Prisma)
+// Multi-tenant: every business record is scoped to an Org.
+// Data residency note: deploy Postgres in an approved Canadian region (PIPEDA).
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-arm64-openssl-3.0.x", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER // firm principal / admin
+  ADVISOR
+  ASSISTANT
+  COMPLIANCE
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  DISCOVERY_BOOKED
+  PROPOSAL_SENT
+  WON
+  LOST
+  NURTURE
+}
+
+enum IntakeStatus {
+  NEW
+  NEEDS_REVIEW
+  IN_PROGRESS
+  WAITING_ON_CLIENT
+  CONVERTED
+  ARCHIVED
+}
+
+enum Priority {
+  LOW
+  MED
+  HIGH
+}
+
+enum KycStatus {
+  CURRENT
+  DUE_SOON
+  OVERDUE
+  IN_PROGRESS
+}
+
+enum TaskStatus {
+  OPEN
+  IN_PROGRESS
+  DONE
+}
+
+model Org {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  users          User[]
+  clients        Client[]
+  households     Household[]
+  leads          Lead[]
+  intakes        Intake[]
+  tasks          Task[]
+  notes          Note[]
+  kycUpdates     KycUpdate[]
+  insuranceNeeds InsuranceNeed[]
+  documents      Document[]
+  notifications  Notification[]
+  auditLogs      AuditLog[]
+  connectors     Connector[]
+  apiKeys        ApiKey[]
+  knowledgeDocs  KnowledgeDoc[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  orgId        String
+  org          Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  email        String   @unique
+  passwordHash String
+  name         String
+  title        String?
+  role         Role     @default(ADVISOR)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  leads         Lead[]         @relation("LeadAdvisor")
+  intakes       Intake[]       @relation("IntakeAdvisor")
+  tasks         Task[]         @relation("TaskAdvisor")
+  notifications Notification[]
+
+  @@index([orgId])
+}
+
+model Household {
+  id        String   @id @default(cuid())
+  orgId     String
+  org       Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  name      String
+  createdAt DateTime @default(now())
+  clients   Client[]
+
+  @@index([orgId])
+}
+
+model Client {
+  id          String     @id @default(cuid())
+  orgId       String
+  org         Org        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  householdId String?
+  household   Household? @relation(fields: [householdId], references: [id])
+  name        String
+  email       String?
+  phone       String?
+  city        String?
+  province    String?
+  segment     String?    @default("Retail")
+  risk        String?    @default("Balanced")
+  horizon     String?
+  aum         Decimal    @default(0) @db.Decimal(14, 2)
+  kycStatus   KycStatus  @default(IN_PROGRESS)
+  kycDate     DateTime?
+  nextReview  DateTime?
+  advisorId   String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  accounts   Account[]
+  notes      Note[]
+  kycUpdates KycUpdate[]
+  documents  Document[]
+
+  @@index([orgId])
+  @@index([orgId, name])
+  @@index([householdId])
+}
+
+model Account {
+  id       String  @id @default(cuid())
+  clientId String
+  client   Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  type     String // RRSP, TFSA, FHSA, RESP, RRIF, LIRA, LIF, Non-Reg, Corporate, Seg Fund
+  balance  Decimal @default(0) @db.Decimal(14, 2)
+
+  @@index([clientId])
+}
+
+model Lead {
+  id              String     @id @default(cuid())
+  orgId           String
+  org             Org        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  firstName       String
+  lastName        String?
+  email           String?
+  phone           String?
+  source          String?
+  campaign        String?
+  productInterest String[]   @default([])
+  estimatedAum    Decimal    @default(0) @db.Decimal(14, 2)
+  status          LeadStatus @default(NEW)
+  priority        Priority   @default(MED)
+  advisorId       String?
+  advisor         User?      @relation("LeadAdvisor", fields: [advisorId], references: [id])
+  consent         Boolean    @default(false)
+  nextFollowUp    DateTime?
+  notes           String?
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  @@index([orgId])
+  @@index([orgId, status])
+  @@index([advisorId])
+}
+
+model Intake {
+  id        String       @id @default(cuid())
+  orgId     String
+  org       Org          @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  type      String // lead, client, insurance, kyc, document, meeting, advisorstream, meta, other
+  name      String
+  email     String?
+  phone     String?
+  source    String?
+  reason    String?
+  priority  Priority     @default(MED)
+  status    IntakeStatus @default(NEW)
+  advisorId String?
+  advisor   User?        @relation("IntakeAdvisor", fields: [advisorId], references: [id])
+  consent   Boolean      @default(false)
+  payload   Json? // full form payload for fields not first-classed yet
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@index([orgId])
+  @@index([orgId, status])
+  @@index([advisorId])
+}
+
+model Task {
+  id        String     @id @default(cuid())
+  orgId     String
+  org       Org        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  title     String
+  clientId  String?
+  advisorId String?
+  advisor   User?      @relation("TaskAdvisor", fields: [advisorId], references: [id])
+  dueDate   DateTime?
+  priority  Priority   @default(MED)
+  status    TaskStatus @default(OPEN)
+  notes     String?
+  createdAt DateTime   @default(now())
+
+  @@index([orgId, status])
+  @@index([advisorId])
+  @@index([clientId])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  orgId     String
+  org       Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  clientId  String?
+  client    Client?  @relation(fields: [clientId], references: [id])
+  category  String   @default("General")
+  body      String
+  locked    Boolean  @default(false)
+  authorId  String?
+  createdAt DateTime @default(now())
+
+  @@index([orgId])
+  @@index([clientId])
+}
+
+model KycUpdate {
+  id               String    @id @default(cuid())
+  orgId            String
+  org              Org       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  clientId         String?
+  client           Client?   @relation(fields: [clientId], references: [id])
+  status           KycStatus @default(IN_PROGRESS)
+  reviewDate       DateTime?
+  risk             String?
+  horizon          String?
+  knowledge        String?
+  liquidity        String?
+  lifeChanges      String?
+  notes            String?
+  complianceReview Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+
+  @@index([orgId])
+  @@index([clientId])
+}
+
+model InsuranceNeed {
+  id         String   @id @default(cuid())
+  orgId      String
+  org        Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  clientName String
+  coverage   String[] @default([])
+  amount     Decimal  @default(0) @db.Decimal(14, 2)
+  existing   String?
+  notes      String?
+  advisorId  String?
+  createdAt  DateTime @default(now())
+
+  @@index([orgId])
+}
+
+model Document {
+  id        String    @id @default(cuid())
+  orgId     String
+  org       Org       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  clientId  String?
+  client    Client?   @relation(fields: [clientId], references: [id])
+  docType   String
+  status    String    @default("Requested") // Requested, Sent, Viewed, Signed, Declined, Expired
+  dueDate   DateTime?
+  priority  Priority  @default(MED)
+  delivery  String? // Email, E-signature, Client portal, Mail
+  notes     String?
+  createdAt DateTime  @default(now())
+
+  @@index([orgId])
+  @@index([clientId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  orgId     String
+  org       Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  title     String
+  message   String?
+  type      String
+  route     String?
+  recordId  String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([orgId, read])
+  @@index([userId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  orgId     String
+  org       Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  actorId   String?
+  action    String
+  entity    String?
+  entityId  String?
+  detail    String?
+  createdAt DateTime @default(now())
+
+  @@index([orgId])
+}
+
+enum ConnectorStatus {
+  NOT_CONFIGURED
+  CONNECTED
+  NEEDS_ATTENTION
+  LOCKED // official API access / approval required (Canada Life, Quadrus)
+  DISABLED
+}
+
+// One row per (org, provider). Secrets are NOT stored here in plaintext in production:
+// store only non-secret config; keep OAuth tokens / secrets in a secrets manager
+// (Azure Key Vault) keyed by connectorId, and call provider APIs server-side.
+model Connector {
+  id          String          @id @default(cuid())
+  orgId       String
+  org         Org             @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  provider    String // meta_ads, advisorstream, docusign, canada_life, quadrus, outlook, m365, csv
+  displayName String
+  status      ConnectorStatus @default(NOT_CONFIGURED)
+  config      Json? // non-secret field mapping / ids (app id, page id, etc.)
+  lastSyncAt  DateTime?
+  syncStatus  String? // ok, error, pending, manual
+  errorLog    String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@unique([orgId, provider])
+  @@index([orgId])
+}
+
+// Documents/notes the AI assistant can use as a knowledge source (RAG).
+// Store extracted text; large files should be chunked for production.
+model KnowledgeDoc {
+  id        String   @id @default(cuid())
+  orgId     String
+  org       Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  title     String
+  text      String // extracted/plain text used for grounding
+  source    String? // upload, paste, connector
+  createdAt DateTime @default(now())
+
+  @@index([orgId])
+}
+
+// Org-scoped API keys for the public integration API (/api/v1).
+// We store only a hash + a short display prefix; the full key is shown once on creation.
+model ApiKey {
+  id         String    @id @default(cuid())
+  orgId      String
+  org        Org       @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  name       String
+  prefix     String // first 8 chars shown in UI (e.g. sk_live_)
+  hash       String    @unique // sha256 of the full key
+  scopes     String[]  @default([])
+  lastUsedAt DateTime?
+  revoked    Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+
+  @@index([orgId])
+}

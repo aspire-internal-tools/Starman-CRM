@@ -1,0 +1,59 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: starman-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: starman
+      POSTGRES_PASSWORD: starman
+      POSTGRES_DB: starman
+    ports:
+      - "5432:5432"
+    volumes:
+      - starman_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U starman -d starman"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  server:
+    build: ./server
+    container_name: starman-server
+    restart: "no"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://starman:starman@db:5432/starman?schema=public
+      JWT_SECRET: dev-only-change-me-in-production
+      JWT_EXPIRES_IN: 12h
+      PORT: 4000
+      WEB_ORIGIN: http://localhost:4000
+      NODE_ENV: development
+      # AI Support — defaults to free "simulated" answers. To use a real model,
+      # set these (see server/.env.example). Values here are read from your shell
+      # environment if present, otherwise fall back to the defaults after ":-".
+      AI_PROVIDER: ${AI_PROVIDER:-simulated}
+      AI_BASE_URL: ${AI_BASE_URL:-}
+      AI_KEY: ${AI_KEY:-}
+      AI_MODEL: ${AI_MODEL:-gpt-4o-mini}
+      AI_API_VERSION: ${AI_API_VERSION:-2024-06-01}
+    ports:
+      - "4000:4000"
+    # Front end = design/Starman.html (single source of truth; version is
+    # tracked in its <meta name="version"> tag + docs/Starman-Version-History.md,
+    # not in the filename). It is mounted live over the server's index page, so
+    # http://localhost:4000/ serves the latest prototype — just edit
+    # ../design/Starman.html and refresh (no rebuild).
+    # NOTE: the prototype runs on local demo data. The database-wired app
+    # lives in ./web — remove the design-file mount line to serve it instead.
+    volumes:
+      - ./web:/web:ro
+      - ../design/Starman.html:/web/index.html:ro
+    # On boot: apply versioned migrations (prisma/migrations/), load demo data, start the API.
+    # Never use `prisma db push` here — migrations are the schema source of truth.
+    command: sh -c "npx prisma migrate deploy && node prisma/seed.js && node src/index.js"
+
+volumes:
+  starman_pgdata:
