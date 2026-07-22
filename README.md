@@ -22,11 +22,38 @@ Use `2.x` for current prototype/module documentation. Do not create parallel ver
 
 ## Quick start
 
-Double-click **`launch_starman.command`** (or run it in a terminal). It starts
-Docker, builds the app, and opens http://localhost:4000.
+### Prototype only — no Docker needed (fastest)
+
+The design prototype (`design/Starman.html`) is a single self-contained page with
+built-in demo data. It needs **no database, no build, and no Docker**.
+
+Double-click **`run-prototype.command`** — it serves the page and opens it at
+http://localhost:4173/Starman.html (login: `andrew@aspire.ca` / `starman123`).
+
+```bash
+# manual equivalent — any static server works, or just open the file:
+cd design && python3 -m http.server 4173   # then open http://localhost:4173/Starman.html
+open design/Starman.html                    # or simply open it in a browser
+```
+
+### Full app (API + database)
+
+Double-click **`launch_starman.command`** — it starts Docker, builds the app, and
+opens http://localhost:4000.
 
 ```bash
 cd starman-app && docker compose up --build   # manual equivalent
+```
+
+Docker is only used here to run **PostgreSQL** alongside the Node server. To run
+the full app without Docker you need Node 20 + a local PostgreSQL instance:
+
+```bash
+cd starman-app/server
+cp .env.example .env      # set DATABASE_URL to your local Postgres + a JWT_SECRET
+npm install
+npm run setup             # prisma migrate deploy + seed
+PORT=4001 npm run dev     # http://localhost:4001
 ```
 
 ## What's in this folder
