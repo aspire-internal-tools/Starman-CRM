@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Starman — Advisor OS · Aspire CRM</title>
-<meta name="project" content="Starman"><meta name="version" content="2.3.0">
+<meta name="project" content="Starman"><meta name="version" content="2.4.0">
 <!-- ════════════════════════════════════════════════════════════════════
      STARMAN · "ADVISOR OS"  —  Aspire Investments & Insurance advisor platform
      Version: see <meta name="version"> above + docs/Starman-Version-History.md
@@ -569,7 +569,7 @@ label.lb{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:up
       <button class="btn pri" type="submit" style="width:100%;height:40px;justify-content:center;font-size:13.5px">Enter Starman →</button>
     </form>
     <div style="text-align:center;margin-top:14px"><button class="btn ghost" type="button" onclick="toggleTheme()" style="font-size:11px">◐ Light / dark</button></div>
-    <div class="lfoot">v2.3 · 2026-07-22 · Aspire Investments &amp; Insurance</div>
+    <div class="lfoot">v2.4 · 2026-07-22 · Aspire Investments &amp; Insurance</div>
   </div>
 </div>
 
@@ -947,7 +947,7 @@ const NAV=[
  {k:'suggestions',ic:'⌂',label:'Households',badge:()=>hhs.filter(s=>s.status==='open'||s.status==='pending_client').length},
  {k:'pipeline',ic:'⇶',label:'Pipeline',kbd:'g p',badge:()=>deals.filter(d=>!d.lost&&d.stage!=='Won').length},
  {k:'tasks',ic:'☑',label:'Tasks',kbd:'g t',badge:()=>tasks.filter(t=>!t.done).length},
- {grp:'Practice Operations'},
+ {grp:'Operations'},
  {k:'compliance',ic:'⚖',label:'Compliance',badge:()=>clients.reduce((s,c)=>s+clientFlags(c).filter(f=>f.sev!=='info').length,0)},
  {k:'supervision',ic:'⊚',label:'Supervision'},
  {k:'planning',ic:'∿',label:'Financial Planning'},
@@ -963,7 +963,7 @@ const NAV=[
  {k:'residency',ic:'◇',label:'Data Residency'},
  {k:'settings',ic:'⚙',label:'Settings'}
 ];
-const TITLES={command:'Command Centre',suggestions:'Household Suggestions',clients:'Clients',client360:'Client 360',pipeline:'Pipeline',tasks:'Tasks',compliance:'Compliance',supervision:'Compliance & Supervision',planning:'Financial Planning',calculators:'Financial Calculators',calendar:'Calendar',reports:'Reports & Analytics',intelligence:'Starman AI Agent',drafts:'Drafts & Approvals',transcripts:'Meeting Intelligence',board:'Bulletin Board',vault:'Data Vault',residency:'Data Residency — Canada',settings:'Settings'};
+const TITLES={command:'Command Centre',suggestions:'Household Suggestions',clients:'Clients',client360:'Client 360',pipeline:'Pipeline',tasks:'Tasks',compliance:'Compliance',supervision:'Compliance & Supervision',planning:'Financial Planning',calculators:'Financial Calculators',calendar:'Calendar',reports:'Reports & Analytics',assetcat:'Assets by Product',intelligence:'Starman AI Agent',drafts:'Drafts & Approvals',transcripts:'Meeting Intelligence',board:'Bulletin Board',vault:'Data Vault',residency:'Data Residency — Canada',settings:'Settings'};
 let route='command', routeArg=null;
 function renderNav(){
   $('#nav').innerHTML=NAV.map((n,i)=>n.grp?`<div class="grp" role="presentation">${n.grp}</div>`
@@ -973,7 +973,7 @@ function go(k,arg){
   if(!VIEWS[k])k='command';
   route=k;routeArg=arg??null;save('route',k);
   renderNav();
-  const crumb=k==='client360'&&arg?`<span class="muted" style="cursor:pointer" onclick="go('clients')">Clients</span><span class="sep">/</span><b>${esc((clients.find(c=>c.id===arg)||{}).name||'Client')}</b>`:`<b>${TITLES[k]}</b><span class="crumb-date"><span class="sep">·</span> ${new Date().toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric'})}</span>`;
+  const crumb=k==='client360'&&arg?`<span class="muted" style="cursor:pointer" onclick="go('clients')">Clients</span><span class="sep">/</span><b>${esc((clients.find(c=>c.id===arg)||{}).name||'Client')}</b>`:k==='assetcat'?`<span class="muted" style="cursor:pointer" onclick="go('reports')">Reports &amp; Analytics</span><span class="sep">/</span><b>${esc(arg||'Assets by Product')}</b>`:`<b>${TITLES[k]}</b><span class="crumb-date"><span class="sep">·</span> ${new Date().toLocaleDateString('en-CA',{weekday:'long',month:'long',day:'numeric'})}</span>`;
   $('#crumbs').innerHTML=crumb;
   const v=$('#view');v.classList.remove('pagein');void v.offsetWidth;v.classList.add('pagein');
   v.innerHTML=VIEWS[k](arg);
@@ -1253,10 +1253,11 @@ function vClient360(id){
   if(window._lastC360!==c.id){_c360tab='overview';window._lastC360=c.id;}
   const flags=clientFlags(c);
   const hg=householdGroups().find(g=>g.members.some(m=>m.id===c.id));
-  const tabs=['overview','plan','meetings','files','compliance','activity'];
+  const tabs=['overview','assets','plan','meetings','files','compliance','activity'];
   const tabBtn=t=>`<button class="${_c360tab===t?'on':''}" onclick="_c360tab='${t}';go('client360',${c.id})">${t==='files'?'Documents & Files':t[0].toUpperCase()+t.slice(1)}</button>`;
   let body='';
   if(_c360tab==='overview')body=c360Overview(c,flags);
+  else if(_c360tab==='assets')body=c360Assets(c);
   else if(_c360tab==='plan')body=`<div style="padding-top:16px">${planMarkup(c.id)}</div>`;
   else if(_c360tab==='meetings')body=c360Meetings(c);
   else if(_c360tab==='files')body=c360Files(c);
@@ -1302,6 +1303,30 @@ function c360Overview(c,flags){
       ${flags.length?flags.map(f=>`<div class="field"><span class="k" style="color:var(--ink)">${esc(f.msg)}<br><small class="muted">${esc(f.rule)}</small></span><span class="v">${sevPill(f.sev)}</span></div>`).join(''):'<div class="empty"><span class="big">✓</span>No open flags.</div>'}
     </div></div>
   </div>`;
+}
+function c360Assets(c){
+  const hs=clientHoldings(c);
+  const total=hs.reduce((s,h)=>s+h.value,0)||1;
+  const cats=ASSET_CATS.map(cat=>({cat,items:hs.filter(h=>h.cat===cat)})).filter(x=>x.items.length)
+    .sort((a,b)=>b.items.reduce((s,h)=>s+h.value,0)-a.items.reduce((s,h)=>s+h.value,0));
+  return `<div class="card"><div class="hd"><h3>Assets</h3><span class="sub" style="margin-left:auto">${fmtK(total)} · ${hs.length} holdings · ${cats.length} categories</span></div>
+    <div class="bd" style="padding-top:8px">
+    ${cats.map(({cat,items})=>{const cv=items.reduce((s,h)=>s+h.value,0);const pct=Math.round(cv/total*100);
+      return `<details style="border:1px solid var(--line);border-radius:10px;margin-bottom:8px;overflow:hidden">
+        <summary style="display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;list-style:none">
+          <span style="width:10px;height:10px;border-radius:3px;background:${CAT_COL[cat]};flex:none"></span>
+          <b style="flex:1;color:var(--ink)">${cat}</b>
+          <span class="muted" style="font-size:11px">${items.length} holding${items.length===1?'':'s'}</span>
+          <b style="width:74px;text-align:right">${fmtK(cv)}</b>
+          <span class="faint" style="width:38px;text-align:right;font-size:11px">${pct}%</span>
+          <span class="muted" style="font-size:11px">▸</span>
+        </summary>
+        <div style="padding:2px 12px 10px;border-top:1px solid var(--line)"><table style="width:100%;font-size:12px"><thead><tr><th>Investment</th><th>Account</th><th style="text-align:right">Value</th><th style="text-align:right">Portfolio</th><th>Policy / Acct #</th><th>Updated</th></tr></thead><tbody>
+          ${items.map(h=>`<tr><td><b>${esc(h.name)}</b></td><td>${esc(h.acct)}</td><td style="text-align:right">${fmtK(h.value)}</td><td style="text-align:right">${Math.round(h.value/total*100)}%</td><td><code>${esc(h.policy)}</code></td><td class="muted">${esc(h.updated)}</td></tr>`).join('')}
+        </tbody></table></div>
+      </details>`;}).join('')}
+    <p class="faint" style="font-size:10.5px;margin-top:8px">Values are illustrative. Investment product data flows from backend integrations; this interface is provider-neutral. Click a category to expand its holdings.</p>
+    </div></div>`;
 }
 function c360Compliance(c,flags){
   return `<div class="grid g2" style="align-items:start">
@@ -1573,15 +1598,63 @@ function vCalendar(){
 /* ════════════════════════════════════════════════════════
    VIEW · REPORTS (pure SVG)
 ════════════════════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════════
+   ASSETS BY INVESTMENT PRODUCT (provider-neutral)
+   Deterministic per-client holdings derived from AUM + risk. The SAME function
+   feeds the dashboard "Assets by Segment" and the client Assets tab, so totals
+   are always consistent. Product/provider data would come from backend
+   integrations in production; the frontend stays provider-neutral.
+   The category list is flexible: add a product type here and both views pick it up.
+════════════════════════════════════════════════════════ */
+const ASSET_CATS=['Segregated Funds','Mutual Funds','Money Market Funds','Guaranteed Investments','Registered Investments','Non-Registered Investments','Other Investment Vehicles'];
+const CAT_COL={'Segregated Funds':'var(--emerald)','Mutual Funds':'#6aa6ff','Money Market Funds':'#a78bfa','Guaranteed Investments':'var(--gold)','Registered Investments':'var(--emerald-dk)','Non-Registered Investments':'#2d8d7f','Other Investment Vehicles':'var(--muted)'};
+const _CAT_NAMES={
+ 'Segregated Funds':['Balanced Segregated Fund','Canadian Equity Segregated Fund','Global Growth Segregated Fund','Income Segregated Fund'],
+ 'Mutual Funds':['Canadian Dividend Fund','Global Equity Fund','Balanced Growth Fund','Core Fixed Income Fund'],
+ 'Money Market Funds':['Money Market Fund','High-Interest Savings Fund','Treasury Fund'],
+ 'Guaranteed Investments':['GIC 3-Year','GIC 5-Year','Guaranteed Interest Account','Laddered GIC'],
+ 'Registered Investments':['RRSP Portfolio','TFSA Portfolio','RRIF Portfolio','FHSA Portfolio'],
+ 'Non-Registered Investments':['Non-Registered Investment Account','Corporate Investment Account','Cash Investment Account'],
+ 'Other Investment Vehicles':['Annuity Contract','Universal Life Cash Value','Alternative Investment']};
+const _CAT_ACCTS={
+ 'Segregated Funds':['Non-Registered','TFSA','RRSP'],'Mutual Funds':['RRSP','TFSA','Non-Registered'],
+ 'Money Market Funds':['Non-Registered','TFSA'],'Guaranteed Investments':['RRSP','TFSA','Non-Registered'],
+ 'Registered Investments':['RRSP','TFSA','RRIF','FHSA','LIRA'],'Non-Registered Investments':['Non-Registered','Corporate'],
+ 'Other Investment Vehicles':['Non-Registered','Corporate']};
+const _CAT_W={
+ Conservative:[.20,.10,.20,.22,.15,.08,.05],Balanced:[.22,.20,.10,.12,.18,.13,.05],
+ Growth:[.18,.28,.05,.06,.20,.18,.05],Aggressive:[.14,.32,.03,.03,.18,.24,.06]};
+function _srand(seed){let s=(seed>>>0)||1;return ()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};}
+function _pick(arr,r){return arr[Math.floor(r*arr.length)%arr.length];}
+function clientHoldings(c){
+  const rnd=_srand((c.id*2654435761)>>>0);
+  const W=_CAT_W[c.risk]||[.2,.2,.15,.12,.15,.13,.05];
+  const raw=[];
+  ASSET_CATS.forEach((cat,i)=>{
+    let weight=W[i]*(0.8+0.4*rnd());
+    if(weight<0.03&&rnd()<0.6)return;               // sometimes a client holds nothing here
+    const n=1+Math.floor(rnd()*2.99);               // 1-3 holdings
+    for(let k=0;k<n;k++)raw.push({cat,name:_pick(_CAT_NAMES[cat],rnd()),acct:_pick(_CAT_ACCTS[cat],rnd()),w:weight/n*(0.6+0.8*rnd()),last4:String(1000+Math.floor(rnd()*8999))});
+  });
+  if(!raw.length)raw.push({cat:'Registered Investments',name:'RRSP Portfolio',acct:'RRSP',w:1,last4:String(1000+Math.floor(rnd()*8999))});
+  const wsum=raw.reduce((a,h)=>a+h.w,0)||1;let assigned=0;
+  raw.forEach((h,idx)=>{h.value=idx===raw.length-1?Math.max(0,c.aum-assigned):Math.round(c.aum*h.w/wsum);assigned+=h.value;h.policy='•••• '+h.last4;h.updated=c.kyc||'2026-06-01';delete h.w;delete h.last4;});
+  return raw;
+}
+function assetTotalsByCategory(list){
+  const out={};ASSET_CATS.forEach(cat=>out[cat]={value:0,count:0});
+  list.forEach(cs=>clientHoldings(cs).forEach(h=>{out[h.cat].value+=h.value;out[h.cat].count++;}));
+  return out;
+}
 function vReports(){
   const byAdv=Object.keys(ADVISORS).map(k=>({k,aum:clients.filter(c=>c.adv===k).reduce((s,c)=>s+c.aum,0),n:clients.filter(c=>c.adv===k).length}));
   const mx=Math.max(...byAdv.map(a=>a.aum),1);
-  const segs={};clients.forEach(c=>segs[c.seg]=(segs[c.seg]||0)+c.aum);
-  const segCol={HNW:'var(--gold)',Household:'var(--emerald)',Professional:'var(--blue)',Retail:'var(--violet)'};
-  const total=clients.reduce((s,c)=>s+c.aum,0);
+  const catTot=assetTotalsByCategory(clients);
+  const segEntries=ASSET_CATS.map(cat=>({cat,value:catTot[cat].value,count:catTot[cat].count})).filter(e=>e.value>0).sort((a,b)=>b.value-a.value);
+  const total=segEntries.reduce((s,e)=>s+e.value,0)||1;
   let acc=0;const R=52,CX=70,CY=70,CIRC=2*Math.PI*R;
-  const donut=Object.entries(segs).map(([k,v])=>{const fr=v/total,off=acc;acc+=fr;
-    return `<circle r="${R}" cx="${CX}" cy="${CY}" fill="none" stroke="${segCol[k]||'var(--muted)'}" stroke-width="15" stroke-dasharray="${(fr*CIRC).toFixed(1)} ${CIRC.toFixed(1)}" stroke-dashoffset="${(-off*CIRC).toFixed(1)}" transform="rotate(-90 ${CX} ${CY})"/>`;}).join('');
+  const donut=segEntries.map(e=>{const fr=e.value/total,off=acc;acc+=fr;
+    return `<circle r="${R}" cx="${CX}" cy="${CY}" fill="none" stroke="${CAT_COL[e.cat]||'var(--muted)'}" stroke-width="15" stroke-dasharray="${(fr*CIRC).toFixed(1)} ${CIRC.toFixed(1)}" stroke-dashoffset="${(-off*CIRC).toFixed(1)}" transform="rotate(-90 ${CX} ${CY})" style="cursor:pointer" onclick="go('assetcat','${e.cat}')"><title>${e.cat}</title></circle>`;}).join('');
   const flows=[420,310,-120,560,380,710,-90,830,640,920,540,1130];
   const fw=560,fh=170,fmax=Math.max(...flows.map(Math.abs));
   const fbars=flows.map((v,i)=>{const bh=Math.abs(v)/fmax*62;const x=20+i*(fw-40)/12;
@@ -1591,14 +1664,14 @@ function vReports(){
   return `
   <div class="grid g2" style="align-items:start;margin-bottom:16px">
     <div class="card"><div class="hd"><h3>AUM by Advisor</h3></div><div class="bd">
-      ${byAdv.map(a=>`<div style="display:flex;align-items:center;gap:11px;margin-bottom:11px">
+      ${byAdv.map(a=>`<div class="click" style="display:flex;align-items:center;gap:11px;margin-bottom:5px;padding:6px;border-radius:8px;cursor:pointer" onclick="_cliFilter='${a.k}';go('clients')" title="View ${advName(a.k)}'s clients">
         <span style="width:110px;font-size:12px">${advName(a.k)}</span>
         <div class="bar" style="flex:1;height:13px"><i style="width:${Math.round(a.aum/mx*100)}%;background:${(ADVISORS[a.k]||{}).color}"></i></div>
         <b style="width:64px;text-align:right;font-size:12px">${fmtK(a.aum)}</b><span class="faint" style="width:54px;font-size:10.5px;text-align:right">${a.n} clients</span></div>`).join('')}
     </div></div>
     <div class="card"><div class="hd"><h3>Assets by Segment</h3></div><div class="bd" style="display:flex;gap:22px;align-items:center;flex-wrap:wrap">
       <svg width="140" height="140" viewBox="0 0 140 140">${donut}<text x="70" y="66" text-anchor="middle" font-size="13" font-weight="800" fill="var(--ink)">${fmtK(total)}</text><text x="70" y="82" text-anchor="middle" font-size="8.5" fill="var(--muted)">TOTAL AUM</text></svg>
-      <div style="flex:1;min-width:160px">${Object.entries(segs).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div class="field"><span class="k"><span style="display:inline-block;width:9px;height:9px;border-radius:3px;background:${segCol[k]};margin-right:8px"></span>${k}</span><span class="v">${fmtK(v)} · ${Math.round(v/total*100)}%</span></div>`).join('')}</div>
+      <div style="flex:1;min-width:210px">${segEntries.map(e=>`<div class="field click" style="cursor:pointer;border-radius:7px" onclick="go('assetcat','${e.cat}')" title="Open ${e.cat}"><span class="k"><span style="display:inline-block;width:9px;height:9px;border-radius:3px;background:${CAT_COL[e.cat]};margin-right:8px"></span>${e.cat}</span><span class="v">${fmtK(e.value)} · ${Math.round(e.value/total*100)}% · ${e.count} holding${e.count===1?'':'s'} <span class="faint">›</span></span></div>`).join('')}</div>
     </div></div>
   </div>
   <div class="grid g2" style="align-items:start">
@@ -1606,7 +1679,7 @@ function vReports(){
       <svg width="100%" viewBox="0 0 ${fw} ${fh}"><line x1="14" y1="${fh/2}" x2="${fw-14}" y2="${fh/2}" stroke="var(--line2)" stroke-width="1"/>${fbars}</svg>
     </div></div>
     <div class="card"><div class="hd"><h3>Pipeline Funnel</h3></div><div class="bd">
-      ${STAGES.map((st,i)=>`<div style="display:flex;align-items:center;gap:11px;margin-bottom:10px">
+      ${STAGES.map((st,i)=>`<div class="click" style="display:flex;align-items:center;gap:11px;margin-bottom:6px;padding:4px 6px;border-radius:8px;cursor:pointer" onclick="go('pipeline')" title="Open pipeline">
         <span style="width:90px;font-size:11.5px;color:var(--muted)">${st}</span>
         <div class="bar" style="flex:1;height:13px"><i style="width:${Math.round(stageVals[i]/smax*100)}%;background:${i===4?'var(--gold)':'var(--emerald)'}"></i></div>
         <b style="width:64px;text-align:right;font-size:12px">${fmtK(stageVals[i])}</b></div>`).join('')}
@@ -1768,13 +1841,33 @@ function planResults(p,c){
     </div></div>
   </div>`;
 }
+/* Financial Planning: searchable client field (replaces the dropdown).
+   Filters as you type, shows identifying info, with empty / loading / no-results states. */
+let _planQuery='',_planLoading=false,_planT=null;
+function planResultsHtml(){
+  if(_planLoading)return '<div class="muted" style="padding:10px 12px;font-size:12px">Searching…</div>';
+  const q=_planQuery.trim().toLowerCase();
+  if(!q)return '';
+  const matches=clients.filter(c=>c.name.toLowerCase().includes(q)).slice(0,8);
+  if(!matches.length)return `<div class="muted" style="padding:11px 12px;font-size:12px">No clients found for &ldquo;${esc(_planQuery)}&rdquo;.</div>`;
+  return matches.map(c=>`<div class="click" style="padding:9px 12px;display:flex;justify-content:space-between;gap:10px;border-top:1px solid var(--line)" onclick="planPick(${c.id})"><span style="min-width:0"><b>${esc(c.name)}</b> <span class="muted" style="font-size:11px">· ${esc(c.seg)} · ${esc(c.city)}</span></span><span class="muted" style="font-size:11px;white-space:nowrap">${advName(c.adv)} · ${fmtK(c.aum)}</span></div>`).join('');
+}
+function renderPlanResults(){const el=$('#plan-results');if(el){el.innerHTML=planResultsHtml();el.style.display=(_planLoading||_planQuery.trim())?'block':'none';}}
+function planSearch(q){_planQuery=q;_planLoading=true;renderPlanResults();clearTimeout(_planT);_planT=setTimeout(()=>{_planLoading=false;renderPlanResults();},180);}
+function planPick(id){_planCid=id;_planQuery='';_planLoading=false;logAudit('Opened financial plan',(clients.find(c=>c.id===id)||{}).name||'');go('planning');}
 function vPlanning(){
-  if(!_planCid)_planCid=clients[0].id;
-  return `<div class="card" style="margin-bottom:14px"><div class="bd" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-    <b>Financial plan for</b>
-    <select class="in" style="width:auto;min-width:220px" onchange="_planCid=+this.value;go('planning')">${clients.map(c=>`<option value="${c.id}" ${c.id===_planCid?'selected':''}>${esc(c.name)}</option>`).join('')}</select>
-    <span class="pill green" style="margin-left:auto">1,000-path Monte Carlo · local</span>
-  </div></div>${planMarkup(_planCid)}`;
+  const c=clients.find(x=>x.id===_planCid);
+  return `<div class="card" style="margin-bottom:14px"><div class="bd">
+    <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:8px">
+      <b>Financial plan for</b>
+      <div style="position:relative;flex:1;min-width:240px;max-width:440px">
+        <input class="in" id="plan-search" placeholder="Search a client by name…" oninput="planSearch(this.value)" autocomplete="off" aria-label="Search clients by name" style="width:100%">
+        <div id="plan-results" style="display:none;position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--bg2);border:1px solid var(--line2);border-radius:10px;box-shadow:var(--shadow-lg);z-index:40;overflow:hidden;max-height:300px;overflow-y:auto"></div>
+      </div>
+      <span class="pill green" style="margin-left:auto">1,000-path Monte Carlo · local</span>
+    </div>
+    <div class="muted" style="font-size:11.5px">${c?`Viewing <b style="color:var(--ink)">${esc(c.name)}</b> · ${esc(c.seg)} · ${esc(c.city)} · ${advName(c.adv)}`:'Search for a client above to load their financial plan.'}</div>
+  </div></div>${c?planMarkup(_planCid):'<div class="card"><div class="bd"><div class="empty"><span class="big">🔎</span>No client selected. Search a client by name above to load their financial plan.</div></div></div>'}`;
 }
 
 /* ════════════════════════════════════════════════════════
@@ -4365,7 +4458,27 @@ function vBoard(){
     </div>
   </div>`;
 }
-const VIEWS={command:vCommand,suggestions:vSuggestions,clients:vClients,client360:vClient360,pipeline:vPipeline,tasks:vTasks,compliance:vCompliance,supervision:vSupervision,planning:vPlanning,calculators:vCalculators,calendar:vCalendar,reports:vReports,intelligence:vAgent,drafts:vDrafts,transcripts:vTranscripts,board:vBoard,vault:vDataVault,residency:vResidency,settings:vSettings};
+/* Routable destination for an Assets-by-Segment category (from Reports). */
+function vAssetCategory(cat){
+  cat=ASSET_CATS.includes(cat)?cat:ASSET_CATS[0];
+  const rows=[];clients.forEach(c=>clientHoldings(c).filter(h=>h.cat===cat).forEach(h=>rows.push({c,h})));
+  rows.sort((a,b)=>b.h.value-a.h.value);
+  const total=rows.reduce((s,r)=>s+r.h.value,0)||1;
+  const bookTotal=clients.reduce((s,c)=>s+c.aum,0)||1;
+  const clientCount=new Set(rows.map(r=>r.c.id)).size;
+  return `<div class="card" style="margin-bottom:14px"><div class="bd" style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+      <span style="width:15px;height:15px;border-radius:4px;background:${CAT_COL[cat]};flex:none"></span>
+      <b style="font-size:15px">${cat}</b>
+      <span class="muted" style="font-size:12px">${rows.length} holding${rows.length===1?'':'s'} · ${clientCount} client${clientCount===1?'':'s'}</span>
+      <span class="pill green" style="margin-left:auto">${fmtK(total)} · ${Math.round(total/bookTotal*100)}% of book</span>
+    </div></div>
+    <div class="card"><div class="hd"><h3>Holdings in ${cat}</h3><span class="sub" style="margin-left:auto">Click a client to open their Assets tab</span></div><div class="bd" style="padding-top:6px">
+    ${rows.length?`<table><thead><tr><th>Client</th><th>Investment</th><th>Account</th><th style="text-align:right">Value</th><th style="text-align:right">% of category</th><th>Policy / Acct #</th></tr></thead><tbody>
+      ${rows.map(({c,h})=>`<tr class="click" onclick="_c360tab='assets';go('client360',${c.id})"><td><b>${esc(c.name)}</b><br><small class="muted">${esc(c.seg)} · ${advName(c.adv)}</small></td><td>${esc(h.name)}</td><td>${esc(h.acct)}</td><td style="text-align:right">${fmtK(h.value)}</td><td style="text-align:right">${Math.round(h.value/total*100)}%</td><td><code>${esc(h.policy)}</code></td></tr>`).join('')}
+      </tbody></table>`:'<div class="empty"><span class="big">📊</span>No holdings in this category.</div>'}
+    </div></div>`;
+}
+const VIEWS={command:vCommand,suggestions:vSuggestions,clients:vClients,client360:vClient360,pipeline:vPipeline,tasks:vTasks,compliance:vCompliance,supervision:vSupervision,planning:vPlanning,calculators:vCalculators,calendar:vCalendar,reports:vReports,assetcat:vAssetCategory,intelligence:vAgent,drafts:vDrafts,transcripts:vTranscripts,board:vBoard,vault:vDataVault,residency:vResidency,settings:vSettings};
 
 /* boot */
 (function boot(){
