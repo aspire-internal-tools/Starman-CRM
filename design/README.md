@@ -21,7 +21,7 @@ Feature docs for the active prototype should say `Starman 2.x module`.
 |---|---|
 | `Starman.html` | Current single-file Starman Advisor OS prototype. It runs locally with demo/localStorage data and is also mounted by Docker as the visual front end at `http://localhost:4000`. |
 
-The prototype's Data Residency page reflects the selected Azure Container Apps architecture in Canada Central. AWS and Google Cloud remain comparison options only; production details belong in `../docs/Starman-Azure-Architecture.md` and `../starman-app/infra/`.
+The prototype's Data Residency page reflects the selected Azure Container Apps architecture in Canada Central. AWS and Google Cloud remain comparison options only; production details belong in `../docs/azure/Starman-Azure-Architecture.md` and `../starman-app/infra/`.
 
 ## Subfolders
 

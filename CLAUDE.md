@@ -135,7 +135,7 @@ No API key ever reaches the browser. See `docs/ARCHITECTURE.md` §8.
   screen scraping, no credential storage. The disabled flag is a code constant,
   not an env toggle. Do not "fix" this.
 - No real client data until the pilot gates in
-  `docs/Starman-Audit-Response-2026-07-14.md` pass. Current seed/demo data is
+  `docs/compliance/Starman-Audit-Response-2026-07-14.md` pass. Current seed/demo data is
   synthetic (uses `example.ca` domains and `555` phone numbers).
 - Schema changes go through `npx prisma migrate dev` — never `db push`.
   Migrations are the source of truth.

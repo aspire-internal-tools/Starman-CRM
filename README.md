@@ -65,7 +65,7 @@ PORT=4001 npm run dev     # http://localhost:4001
 | `design/Starman.html` | **The design prototype** ("Advisor OS"): the visual/UX north star. Runs standalone on local demo data — it is *not* connected to the database. `docker compose up` currently serves this file at `/` (see note below). |
 | `design/screenshots/` | UI screenshots taken during design iterations. |
 | `branding/` | Aspire source branding kit and logo reference assets. Implemented UI logo copies live in `design/assets/` and `starman-app/web/assets/`. |
-| `docs/` | Business & planning documents — MVP definition, project map, build journey, version standard, audit response, funding package, go-live plan, data-residency guide, master prompt. Start with `docs/PROJECT-MAP.md`, `docs/MVP.md`, `docs/JOURNEY.md`, `docs/Starman-Version-History.md`, and `docs/Starman-Audit-Response-2026-07-14.md`. |
+| `docs/` | Business & planning documents — MVP definition, project map, build journey, version standard, audit response, funding package, go-live plan, data-residency guide, master prompt. Start with `docs/PROJECT-MAP.md`, `docs/MVP.md`, `docs/JOURNEY.md`, `docs/Starman-Version-History.md`, and `docs/compliance/Starman-Audit-Response-2026-07-14.md`. |
 | `aspire_connectors/` | Python/FastAPI connector layer prototype (Meta leads, webhooks, CSV import). |
 | `launch_starman.command` | One-click macOS launcher. |
 

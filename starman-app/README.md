@@ -135,11 +135,11 @@ The current `../design/Starman.html` prototype remains the design reference for 
 
 The selected deployment architecture is documented in:
 
-- `../docs/Starman-Cloud-Provider-Decision.md`
-- `../docs/Starman-Azure-Architecture.md`
-- `../docs/Starman-Azure-Deployment-Runbook.md`
-- `../docs/Starman-Azure-Security-and-Residency-Checklist.md`
-- `../docs/Starman-Azure-Cost-and-Capacity-Model.md`
+- `../docs/azure/Starman-Cloud-Provider-Decision.md`
+- `../docs/azure/Starman-Azure-Architecture.md`
+- `../docs/azure/Starman-Azure-Deployment-Runbook.md`
+- `../docs/azure/Starman-Azure-Security-and-Residency-Checklist.md`
+- `../docs/azure/Starman-Azure-Cost-and-Capacity-Model.md`
 - `infra/README.md`
 
 The Bicep foundation is intentionally non-deploying by default (`deployApplication=false`). It prepares Canada-only region validation, private PostgreSQL/Blob/Key Vault networking, managed identities, ACR, Container Apps, monitoring, and environment parameters. Azure OpenAI is not provisioned because its regional deployment type, model, quota, and approval must be established first.

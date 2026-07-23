@@ -37,7 +37,7 @@ The project lives at `~/Desktop/Destiny/CRM/` and has **three moving parts**:
 
 **Deliberate two-frontend situation:** `docker compose up` in `starman-app/` serves the **Advisor OS design prototype** at `http://localhost:4000/` (bind-mounted over the web root). The **functional, database-wired client** is `starman-app/web/` — serve it by removing the design-file mount from `docker-compose.yml`, or run the server locally (convention: port **4001**) to test real features. Merging the Advisor OS design onto the real API is a roadmap item, not a blocker.
 
-**Deployment posture:** the selected target is **Microsoft Azure Container Apps in Canada Central** (Bicep foundation in `starman-app/infra/`), but **no Azure resources are provisioned** and **real client data is prohibited** until the pilot gates in `docs/Starman-Audit-Response-2026-07-14.md` are complete.
+**Deployment posture:** the selected target is **Microsoft Azure Container Apps in Canada Central** (Bicep foundation in `starman-app/infra/`), but **no Azure resources are provisioned** and **real client data is prohibited** until the pilot gates in `docs/compliance/Starman-Audit-Response-2026-07-14.md` are complete.
 
 Dev login (seeded, never shown in UI): `andrew@aspire.ca` / `starman123`.
 
@@ -68,7 +68,7 @@ The MVP succeeds when, for **30 consecutive days at Aspire**: all intake flows t
 
 1. **Org-scoping is law.** Every business row carries `orgId`; every query filters on it. No exceptions, ever — this is the multi-tenant/licensing foundation and the PIPEDA boundary.
 2. **Compliance is a feature, not a checkbox.** Locked carriers are locked *in code*, not config. Audit logging happens on every mutation. Data residency was documented before go-live, not after.
-3. **No real client data until the pilot gates pass.** Synthetic/demo data only until the checklist in `Starman-Audit-Response-2026-07-14.md` is signed off.
+3. **No real client data until the pilot gates pass.** Synthetic/demo data only until the checklist in `compliance/Starman-Audit-Response-2026-07-14.md` is signed off.
 4. **Secrets never touch the browser or the database.** API keys stored as SHA-256 hash + display prefix only; AI keys live server-side; OAuth tokens belong in a secrets manager (Azure Key Vault) keyed by `connectorId`.
 5. **AI is grounded and subordinate.** The assistant answers only from the firm's own CRM data and uploaded documents, surfaces compliance concerns before revenue opportunities, and never gives final investment/tax/legal/insurance advice.
 6. **Prototype in one file, port deliberately.** The prototype HTML (`design/Starman.html`) explores the vision fast; `starman-app/` ships only what earned its place. Keep exactly one active prototype file, permanently named — versions live in its metadata and the version log, never in filenames.
@@ -125,14 +125,14 @@ Single self-contained HTML file (no build step, works offline). State in browser
 │   ├── INVENTORY.md              File inventory
 │   ├── ARCHITECTURE.md           ← this document
 │   ├── Starman-Version-History.md        Version standard + internal version log (2.x line)
-│   ├── Starman-Audit-Response-2026-07-14.md   Pilot gates (blocks real data)
 │   ├── Starman-Master-Prompt.md          Assistant system message + module spec
-│   ├── Starman-Azure-*.md                Architecture / runbook / cost / security
-│   ├── Starman-Canada-Data-Residency-Guide.md
-│   ├── Starman-Cloud-Provider-Decision.md
-│   ├── Starman-Go-Live-Plan-30-Days.md
-│   ├── Starman-Household-Suggestions-Design.md
+│   ├── Starman-Go-Live-Plan-30-Days.md   30-day go-live plan
 │   ├── Aspire-Brand-Standard.md
+│   ├── azure/                    Cloud decision, architecture, runbook, cost, security/residency checklist
+│   ├── compliance/               Audit response (pilot gates) + Canada data-residency guide
+│   ├── integrations/             Canada Life/Quadrus + Sync/SharePoint integration designs
+│   ├── funding/                  Funding package + SR&ED and funding
+│   ├── design-notes/             Household suggestions design
 │   └── audits/                   Dated audit artifacts
 ├── branding/                     Source Aspire brand kit (not daily UI assets)
 ├── aspire_connectors/            FastAPI connector prototype
@@ -278,7 +278,7 @@ Dashboard reads aggregate it all in one round trip.
 CRUD on `Client` with nested `Account`s, `Note`s (lockable for compliance), and `KycUpdate` history. Tracks `kycStatus` (`CURRENT/DUE_SOON/OVERDUE/IN_PROGRESS`), `kycDate`, `nextReview`, `risk`, `segment`, `aum`. Cross-org `advisorId` validation prevents assigning another firm's advisor.
 
 ### Households (`routes/households.js`)
-Groups clients; AUM rolls up from member clients. (The suggest-only AI householding with confidence scoring exists in the design prototype and `Starman-Household-Suggestions-Design.md` — not yet productionized.)
+Groups clients; AUM rolls up from member clients. (The suggest-only AI householding with confidence scoring exists in the design prototype and `design-notes/Starman-Household-Suggestions-Design.md` — not yet productionized.)
 
 ### Leads pipeline (`routes/leads.js` — **the canonical route pattern**)
 CRUD over `Lead` with status pipeline `NEW → CONTACTED → QUALIFIED → DISCOVERY_BOOKED → PROPOSAL_SENT → WON/LOST/NURTURE`, priorities, sources/campaigns, estimated AUM, consent flag, next-follow-up. Copy this file when adding any new module.
@@ -396,7 +396,7 @@ Ordered per `docs/MVP.md` §7, with current status:
 | 5 | **Meeting Intelligence** | Build the §8.4 spec: transcript → client match → filed doc + draft notes/tasks |
 | 6 | **Licensing pilot** | Second firm on a fresh `Org` row; pricing experiment |
 
-**Gating everything:** the Azure pilot path — provision the Bicep foundation (`infra/`), pass the security/residency checklist, complete the pilot gates (named owners, system-of-record decision, privacy/dealer/compliance review, backup-restore test, synthetic-data run) **before any real client data**. See `Starman-Go-Live-Plan-30-Days.md` and `Starman-Audit-Response-2026-07-14.md`.
+**Gating everything:** the Azure pilot path — provision the Bicep foundation (`infra/`), pass the security/residency checklist, complete the pilot gates (named owners, system-of-record decision, privacy/dealer/compliance review, backup-restore test, synthetic-data run) **before any real client data**. See `Starman-Go-Live-Plan-30-Days.md` and `compliance/Starman-Audit-Response-2026-07-14.md`.
 
 **Prototype-to-product backlog** (proven in the design prototype, not yet ported): Household Suggestions with confidence routing · Financial Planning engine (Monte Carlo/RRIF/tax — math already regression-verified) · Calculators · Compliance & Supervision (CCO) dashboard with TCP/vulnerable-client flags and CRM2 tracking · Calendar · Reports.
 
@@ -455,7 +455,7 @@ Ordered per `docs/MVP.md` §7, with current status:
 | **Meeting Intelligence** | Planned transcript-ingestion agent (spec exists; the design prototype has a working version) |
 | **Data Vault** | The design prototype's per-client file store concept |
 | **CCO module** | The prototype's Compliance & Supervision dashboard (Chief Compliance Officer view) |
-| **Pilot gates** | The checklist in `Starman-Audit-Response-2026-07-14.md` that must pass before real client data |
+| **Pilot gates** | The checklist in `compliance/Starman-Audit-Response-2026-07-14.md` that must pass before real client data |
 | **writeAudit** | `db.js` helper that inserts an `AuditLog` row; required after every mutation |
 | **Command Centre** | The dashboard view (KPIs + today's priorities) |
 | **Intrapreneurship** | The venture framing: built inside the practice with a path to licensing outward |

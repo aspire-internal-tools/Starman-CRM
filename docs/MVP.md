@@ -107,4 +107,4 @@ Deploy target: any Docker host with Postgres in a Canadian region (PIPEDA).
    `starman-app/Starman-Meeting-Intelligence-Prompt.md`).
 6. **Licensing pilot** — second firm on a fresh org row; pricing experiment.
 
-See `Starman-Audit-Response-2026-07-14.md` for the full audit incorporation checklist.
+See `compliance/Starman-Audit-Response-2026-07-14.md` for the full audit incorporation checklist.

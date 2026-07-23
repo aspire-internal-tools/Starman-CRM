@@ -40,18 +40,18 @@ file modification times (macOS). Paths are relative to the `CRM/` root.*
 | `JOURNEY.md` | 2026-07-14 | Build timeline (May 31 → today) |
 | `INVENTORY.md` | 2026-07-14 | This file |
 | `Starman-Version-History.md` | 2026-07-17 | Version source of truth + internal version log (2.x standard, versionless filenames) |
-| `Starman-Audit-Response-2026-07-14.md` | 2026-07-14 | Response to July 10 audit: pilot gates, ownership, real-data restrictions |
+| `compliance/Starman-Audit-Response-2026-07-14.md` | 2026-07-14 | Response to July 10 audit: pilot gates, ownership, real-data restrictions |
 | `Starman-Master-Prompt.md` | 2026-07-07 | Product master prompt / spec |
-| `Starman-Funding-Package.docx` | 2026-07-07 | Intrapreneurship pitch package |
+| `funding/Starman-Funding-Package.docx` | 2026-07-07 | Intrapreneurship pitch package |
 | `Starman-Go-Live-Plan-30-Days.md` | 2026-06-22 | Launch plan |
-| `Starman-Canada-Data-Residency-Guide.md` | 2026-06-18 | PIPEDA / data-residency strategy |
-| `Starman-Household-Suggestions-Design.md` | 2026-06-11 | Household grouping design notes |
-| `Starman-Cloud-Provider-Decision.md` | 2026-07-15 | Azure Container Apps selection and superseded AWS assumptions |
-| `Starman-Azure-Architecture.md` | 2026-07-15 | Azure service map, trust boundaries, data flows, and recovery posture |
-| `Starman-Azure-Deployment-Runbook.md` | 2026-07-15 | Approval-gated validation, deployment, smoke test, rollback, and recovery runbook |
-| `Starman-Azure-Security-and-Residency-Checklist.md` | 2026-07-15 | Evidence gate before production or real-client-data authorization |
-| `Starman-Azure-Cost-and-Capacity-Model.md` | 2026-07-15 | Low/expected/high Azure pricing and capacity input worksheet |
-| `Starman-Azure-Implementation-Plan.md` | 2026-07-15 | Traceable Azure local-preparation implementation plan |
+| `compliance/Starman-Canada-Data-Residency-Guide.md` | 2026-06-18 | PIPEDA / data-residency strategy |
+| `design-notes/Starman-Household-Suggestions-Design.md` | 2026-06-11 | Household grouping design notes |
+| `azure/Starman-Cloud-Provider-Decision.md` | 2026-07-15 | Azure Container Apps selection and superseded AWS assumptions |
+| `azure/Starman-Azure-Architecture.md` | 2026-07-15 | Azure service map, trust boundaries, data flows, and recovery posture |
+| `azure/Starman-Azure-Deployment-Runbook.md` | 2026-07-15 | Approval-gated validation, deployment, smoke test, rollback, and recovery runbook |
+| `azure/Starman-Azure-Security-and-Residency-Checklist.md` | 2026-07-15 | Evidence gate before production or real-client-data authorization |
+| `azure/Starman-Azure-Cost-and-Capacity-Model.md` | 2026-07-15 | Low/expected/high Azure pricing and capacity input worksheet |
+| `azure/Starman-Azure-Implementation-Plan.md` | 2026-07-15 | Traceable Azure local-preparation implementation plan |
 | `audits/` | 2026-07-15 | Original July 10 audit artifacts in PDF and Markdown |
 
 ## starman-app/ (key files)

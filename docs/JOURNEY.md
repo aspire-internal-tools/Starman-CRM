@@ -25,11 +25,11 @@
 
 ### June 11 — Design milestone
 - Major design iteration.
-- Household grouping design notes (`Starman-Household-Suggestions-Design.md`).
+- Household grouping design notes (`design-notes/Starman-Household-Suggestions-Design.md`).
 
 ### June 17–18 — Compliance posture
 - Visual overhaul.
-- `Starman-Canada-Data-Residency-Guide.md` — PIPEDA/data-residency strategy
+- `compliance/Starman-Canada-Data-Residency-Guide.md` — PIPEDA/data-residency strategy
   documented (Canadian-region Postgres, no US-hosted client data).
 
 ### June 22 — Getting serious
@@ -42,7 +42,7 @@
 
 ### July 6–7 — Packaging the venture
 - Meeting-intelligence feature spec written.
-- `Starman-Funding-Package.docx` and `Starman-Master-Prompt.md` — the
+- `funding/Starman-Funding-Package.docx` and `Starman-Master-Prompt.md` — the
   intrapreneurship pitch materials.
 - One-click launcher (`launch_starman.command`) + Docker Compose finalized:
   anyone at the firm can run Starman with a double-click.

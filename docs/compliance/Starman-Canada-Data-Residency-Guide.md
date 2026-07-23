@@ -11,7 +11,7 @@ This guide explains how Starman should keep client data, operational records, an
 
 Canadian hosting is one control, not a complete compliance conclusion. Starman must also address Alberta PIPA, applicable PIPEDA obligations, Quebec Law 25 where relevant, books-and-records requirements, consent, purpose limitation, access, retention, deletion, breach response, supervision, contracts, and subprocessors.
 
-Real client information remains prohibited until the pilot gates in `docs/PROJECT-MAP.md`, `docs/Starman-Audit-Response-2026-07-14.md`, and `docs/Starman-Azure-Security-and-Residency-Checklist.md` are approved.
+Real client information remains prohibited until the pilot gates in `docs/PROJECT-MAP.md`, `docs/compliance/Starman-Audit-Response-2026-07-14.md`, and `docs/azure/Starman-Azure-Security-and-Residency-Checklist.md` are approved.
 
 ## 2. Data And Processing Planes
 
@@ -96,7 +96,7 @@ Maintain current evidence for:
 
 ## 8. Cloud Comparison Context
 
-AWS and Google Cloud also offer Canadian regions and remain relevant only as comparison or fallback context. They are not Starman's active deployment architecture. The selected decision and rationale are in `docs/Starman-Cloud-Provider-Decision.md`.
+AWS and Google Cloud also offer Canadian regions and remain relevant only as comparison or fallback context. They are not Starman's active deployment architecture. The selected decision and rationale are in `docs/azure/Starman-Cloud-Provider-Decision.md`.
 
 ## Sources To Re-Check At Deployment Time
 

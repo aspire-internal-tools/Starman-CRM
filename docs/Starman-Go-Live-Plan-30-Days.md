@@ -11,7 +11,7 @@
 1. **`Starman-5.0.html`** — the complete, tested feature spec: Clients, Households + Household 360, Pipeline, Tasks, Compliance flags, Financial Planning, Reports, **Advisor Agent** (structured drafts + audit), **Meeting Intelligence** (transcript + audio ingestion), **Data Residency** module + AI cost estimator. This is your blueprint and UAT reference.
 2. **`starman-app/`** — a real backend already scaffolded: **Node/Express + Prisma + PostgreSQL**, JWT auth, routes (`ai`, `auth`, `connectors`, `intakes`, `leads`, `notifications`, `v1`), an **AI provider abstraction** (`AI_PROVIDER` = simulated → swappable), a DB-backed web client, and **Docker Compose**. This is ~40% of the production backend done.
 3. **`aspire_connectors/`** — Python connector app + sample data (CSV import path).
-4. **Design docs** — `Starman-Household-Suggestions-Design.md`, `Starman-Canada-Data-Residency-Guide.md`.
+4. **Design docs** — `design-notes/Starman-Household-Suggestions-Design.md`, `compliance/Starman-Canada-Data-Residency-Guide.md`.
 
 The work is: **port 5.0's features into `starman-app`, wire model inference through an approved Canadian-resident path, harden security/compliance, deploy to Azure Container Apps in Canada Central, complete synthetic-data acceptance and recovery testing, then seek authorization for a controlled pilot.**
 
@@ -50,7 +50,7 @@ Primary deployment in **Azure Canada Central**; Canada East recovery remains dis
 - **Auth:** keep the existing JWT flow until a complete Microsoft Entra ID migration is separately approved and tested.
 - **Monitoring/backups:** Azure Monitor, Log Analytics, Application Insights, PostgreSQL backup, Blob versioning, and an evidenced synthetic restore.
 
-This matches the `Starman-Canada-Data-Residency-Guide.md` — pull the production stub from there.
+This matches the `compliance/Starman-Canada-Data-Residency-Guide.md` — pull the production stub from there.
 
 ---
 

@@ -145,7 +145,7 @@ and `aspire_connectors/`).
 - Push only what belongs in document storage. Sensitive records stay governed in
   the Canadian-region database, not duplicated to a location with weaker controls.
 - No real client data flows through any of this until the pilot gates in
-  `docs/Starman-Audit-Response-2026-07-14.md` pass. Until then, the public
+  `docs/compliance/Starman-Audit-Response-2026-07-14.md` pass. Until then, the public
   prototype stays demo-only and the sync worker runs against synthetic data.
 
 ---

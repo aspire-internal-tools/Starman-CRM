@@ -25,8 +25,8 @@
 
 **Files:**
 
-- Create `docs/Starman-Cloud-Provider-Decision.md`.
-- Create `docs/Starman-Azure-Implementation-Plan.md`.
+- Create `docs/azure/Starman-Cloud-Provider-Decision.md`.
+- Create `docs/azure/Starman-Azure-Implementation-Plan.md`.
 - Modify `docs/PROJECT-MAP.md` and `docs/INVENTORY.md`.
 
 **Steps:**
@@ -106,11 +106,11 @@
 
 **Files:**
 
-- Create `docs/Starman-Azure-Architecture.md`.
-- Create `docs/Starman-Azure-Deployment-Runbook.md`.
-- Create `docs/Starman-Azure-Security-and-Residency-Checklist.md`.
+- Create `docs/azure/Starman-Azure-Architecture.md`.
+- Create `docs/azure/Starman-Azure-Deployment-Runbook.md`.
+- Create `docs/azure/Starman-Azure-Security-and-Residency-Checklist.md`.
 - Modify `docs/Starman-Go-Live-Plan-30-Days.md`.
-- Modify `docs/Starman-Canada-Data-Residency-Guide.md`.
+- Modify `docs/compliance/Starman-Canada-Data-Residency-Guide.md`.
 - Modify `docs/MVP.md`.
 - Modify `docs/README.md`.
 - Modify `docs/PROJECT-MAP.md`.

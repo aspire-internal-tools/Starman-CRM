@@ -247,7 +247,7 @@ from insurance needs/coverage.
 
 - **No screen scraping, no login automation, no stored carrier credentials.** Ever.
 - **No real client data** until the pilot gates in
-  `docs/Starman-Audit-Response-2026-07-14.md` pass. Synthetic data only until then.
+  `docs/compliance/Starman-Audit-Response-2026-07-14.md` pass. Synthetic data only until then.
 - **Canadian data residency** (PIPEDA): any imported records live in the
   Canadian-region Postgres, per `Starman-Canada-Data-Residency-Guide.md`.
 - **Secrets server-side only**, in a vault keyed by connector. Never in the DB
@@ -298,8 +298,8 @@ Log the answers back into this document and update the *(verify)* markers to
 - **Enabled path to build on first:** `aspire_connectors/app/connectors/csv_io.py`
   (manual CSV import — Option C).
 - **Change-detection / scheduled-import model to reuse:**
-  `docs/Starman-Sync-and-SharePoint-Integration.md` (§4 audit log + `updatedAt`).
-- **Residency rules:** `docs/Starman-Canada-Data-Residency-Guide.md`.
+  `docs/integrations/Starman-Sync-and-SharePoint-Integration.md` (§4 audit log + `updatedAt`).
+- **Residency rules:** `docs/compliance/Starman-Canada-Data-Residency-Guide.md`.
 - **Frontend (provider-neutral) asset view:** `design/Starman.html` — Assets by
   Segment and the client Assets tab.
 
